@@ -1,3 +1,5 @@
 .vagrant
 .DS_Store
 *pyc
+.idea/*
+.idea

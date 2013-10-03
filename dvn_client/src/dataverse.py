@@ -29,7 +29,7 @@ class Dataverse(object):
             collectionInfo,
             namespace="http://purl.org/net/sword/terms/state",
             tag="dataverseHasBeenReleased",
-            numberOfElements=1
+            numberOfElements=1,
         ).text
         return bool(status)
 
