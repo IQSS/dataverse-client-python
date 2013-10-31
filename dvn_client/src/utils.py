@@ -2,12 +2,14 @@ __author__="peterbull"
 __date__ ="$Aug 16, 2013 12:07:48 PM$"
 
 from lxml import etree
-        
-# factor out xpath operations so we don't have to look at its ugliness all
-# over the place
+
+REPLACEMENT_DICT = {'id': 'identifier', 'author': 'creator', 'producer': 'publisher', 'restriction': 'rights',
+                    'keyword': 'subject', 'publication': 'isReferencedBy'}
+
+# factor out xpath operations so we don't have to look at its ugliness
 def get_elements(rootElement, tag=None, namespace=None, attribute=None, attributeValue=None, numberOfElements=None):
-    #except either an lxml.Element or a string of xml
-    #if a string, convert to etree element
+    # accept either an lxml.Element or a string of xml
+    # if a string, convert to etree element
     if isinstance(rootElement, str):
         rootElement = etree.XML(rootElement)
     
@@ -56,3 +58,9 @@ xml=
         retVal = None
     
     return retVal
+
+def format_dcterms(term):
+    if str in REPLACEMENT_DICT.keys():
+        return 'dcterms_{}'.format(REPLACEMENT_DICT[term])
+    else:
+        return 'dcterms_{}'.format(term)

@@ -4,10 +4,10 @@ __date__ ="$Jul 30, 2013 12:32:24 PM$"
 # python base lib modules
 import pprint
 
-#downloaded modules
+# downloaded modules
 from lxml import etree
 
-#local modules
+# local modules
 from study import Study
 import utils
 
@@ -33,10 +33,11 @@ class Dataverse(object):
         ).text
         return bool(status)
 
-    def add_study(self, study):        
+    def add_study(self, study):
+        # this creates the study AND generates a deposit receipt
         depositReceipt = self.connection.swordConnection.create(
+            col_iri=self.collection.href,
             metadata_entry=study.entry,
-            col_iri=self.collection.href
         )
                                                      
         study.hostDataverse = self
@@ -66,13 +67,13 @@ class Dataverse(object):
         studiesResponse = self.connection.swordConnection.get_resource(self.collection.href)
 
         return [
-            Study.CreateStudyFromEntryElement(element, hostDataverse=self)
+            Study.from_entry_element(element, hostDataverse=self)
             for element in utils.get_elements(studiesResponse.content, tag='entry')
         ]
         # # get all the entry nodes and parse them into study objects
         # studies = []
         # for element in utils.get_elements(studiesResponse.content, tag="entry"):
-        #     s = Study.CreateStudyFromEntryElement(element, hostDataverse=self)
+        #     s = Study.from_entry_element(element, hostDataverse=self)
         #     studies.append(s)
         #
         # return studies

@@ -44,7 +44,7 @@ class TestStudyOperations(unittest.TestCase):
         #runs before each test method
         
         #create a study for each test
-        s = Study.CreateStudyFromDict(PICS_OF_CATS_STUDY)
+        s = Study.from_dict(PICS_OF_CATS_STUDY)
         self.dv.add_study(s)
         id = s.get_id()
         self.s = self.dv.get_study_by_hdl(id)
@@ -58,7 +58,7 @@ class TestStudyOperations(unittest.TestCase):
             return
     
     def test_create_study_from_xml(self):
-        xmlStudy = Study.CreateStudyFromAtomEntryXmlFile(ATOM_STUDY)
+        xmlStudy = Study.from_atom_xml_file(ATOM_STUDY)
         self.dv.add_study(xmlStudy)
         atomStudy = self.dv.get_study_by_string_in_entry("The first study for the New England Journal of Coffee dataverse")
         self.assertTrue(atomStudy)
@@ -105,7 +105,7 @@ class TestStudyOperations(unittest.TestCase):
         self.assertTrue(len(catFile) == 0)
         
     def test_delete_a_study(self):
-        xmlStudy = Study.CreateStudyFromAtomEntryXmlFile(ATOM_STUDY)
+        xmlStudy = Study.from_atom_xml_file(ATOM_STUDY)
         self.dv.add_study(xmlStudy)
         atomStudy = self.dv.get_study_by_string_in_entry("The first study for the New England Journal of Coffee dataverse")
         self.assertTrue(atomStudy)

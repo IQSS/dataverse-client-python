@@ -16,12 +16,13 @@ import json
 from time import sleep
 import traceback
 
-#downloaded modules
+# downloaded modules
 
-#local modules
+# local modules
 from dvn_client.src.study import Study
 from dvn_client.src.connection import DvnConnection
-from config import DEFAULT_PASSWORD, DEFAULT_HOST, DEFAULT_CERT, DEFAULT_USERNAME, EXAMPLE_FILE
+from config import DEFAULT_PASSWORD, DEFAULT_HOST, DEFAULT_CERT, DEFAULT_USERNAME, EXAMPLE_FILE, \
+    EXAMPLE_DICT
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='dvn_client exercises the APIs available for a DataVerse Network')
@@ -44,7 +45,7 @@ def main():
         execfile(args.config, globals())
         execfile(args.runTests, globals())
     
-    dv = None #declare outside so except clause has access
+    dv = None # declare outside so except clause has access
     try:
         dvc = DvnConnection(username=DEFAULT_USERNAME,
                         password=DEFAULT_PASSWORD, 
@@ -60,30 +61,36 @@ def main():
         dv = dvs[0]
       
         # clean up the test dataverse
-        #dv.delete_all_studies()
-        print "RELEASED: ", dv.is_released()
+        # dv.delete_all_studies()
+        print "RELEASED:", dv.is_released()
 
-        #s = Study(title="My Very Own Study")
-        #s = Study.CreateStudyFromDict(PICS_OF_CATS_STUDY)
-        s = Study.CreateStudyFromAtomEntryXmlFile(EXAMPLE_FILE)
-        dv.add_study(s)
-        #s.add_files([INGEST_FILES])
-        print s.get_citation()
-        print s.get_state()
+        # s = Study.from_dict(EXAMPLE_DICT)
+        # print dv.get_studies()
+        s = Study.from_atom_xml_file(EXAMPLE_FILE)
+        # dv.add_study(s)
+        print s
+
+        # print s.get_entry()
+
+        # s.add_files([INGEST_FILES])
+        # print s.get_citation()
+        # print s.get_state()
+
+        # sleep(3) #wait for ingest`
         
-        #sleep(3) #wait for ingest`
+        # fs = s.get_files()
+        # print "FILES: ", len(fs)
+        # s.delete_file(fs[-1])
+        # fs = s.get_files()
+        # print "FILES: ", len(fs)
+        # s.delete_all_files()
+        # fs = s.get_files()
+        # print "FILES: ", len(fs)
         
-        #fs = s.get_files()
-        #print "FILES: ", len(fs)
-        #s.delete_file(fs[-1])
-        #fs = s.get_files()
-        #print "FILES: ", len(fs)
-        #s.delete_all_files()
-        #fs = s.get_files()
-        #print "FILES: ", len(fs)
-        
-        #s.release()
-        
+        # s.release()
+
+        # s.hostDataverse.delete_study(s)
+
         print "\n\ndvn_client succeeded"
         
     except Exception as e:
