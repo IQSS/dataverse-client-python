@@ -6,6 +6,7 @@ from lxml import etree
 REPLACEMENT_DICT = {'id': 'identifier', 'author': 'creator', 'producer': 'publisher', 'restriction': 'rights',
                     'keyword': 'subject', 'publication': 'isReferencedBy'}
 
+
 # factor out xpath operations so we don't have to look at its ugliness
 def get_elements(rootElement, tag=None, namespace=None, attribute=None, attributeValue=None, numberOfElements=None):
     # accept either an lxml.Element or a string of xml
@@ -59,8 +60,9 @@ xml=
     
     return retVal
 
-def format_dcterms(term):
-    if str in REPLACEMENT_DICT.keys():
+
+def format_term(term):
+    if term in REPLACEMENT_DICT.keys():
         return 'dcterms_{}'.format(REPLACEMENT_DICT[term])
     else:
         return 'dcterms_{}'.format(term)

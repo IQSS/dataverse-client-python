@@ -64,9 +64,9 @@ def main():
         # dv.delete_all_studies()
         print "RELEASED:", dv.is_released()
 
-        # s = Study.from_dict(EXAMPLE_DICT)
+        # s = Study(EXAMPLE_DICT)
         # print dv.get_studies()
-        s = Study.from_atom_xml_file(EXAMPLE_FILE)
+        s = Study(EXAMPLE_FILE)
         # dv.add_study(s)
         print s
 

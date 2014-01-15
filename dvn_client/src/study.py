@@ -17,46 +17,44 @@ import sword2
 # local modules
 from file import DvnFile
 import utils
-
+from utils import format_term
 
 class Study(object):
-    def __init__(self, title, id=None, author=None, producer=None, date=None, description=None, abstract=None,
-                 type=None, source=None, restriction=None, relation=None, keyword=None, coverage=None,
-                 publication=None, editUri=None, editMediaUri=None, statementUri=None, hostDataverse=None,
-                 atomEntryXml=None):
-            # Create SWORD Entry with Metadata for study
-            if atomEntryXml:
-                self.entry = sword2.Entry(atomEntryXml=atomEntryXml)
-            else:
-                self.entry = sword2.Entry(
-                    dcterms_title=title,
-                    dcterms_identifier=id,
-                    dcterms_creator=author,
-                    dcterms_publisher=producer,
-                    dcterms_date=date,
-                    dcterms_description=description,
-                    dcterms_abstract=abstract,
-                    dcterms_type=type,
-                    dcterms_source=source,
-                    dcterms_rights=restriction,
-                    dcterms_relation=relation,
-                    dcterms_subject=keyword,
-                    dcterms_coverage=coverage,
-                    dcterms_isReferencedBy=publication,
-                )
+    def __init__(self, *args, **kwargs):
 
-            # TODO: Add list functionality to passed parameters
-            # self.entry.add_fields(dcterms_subject="KEYWORD2") # how to define additional fields
+        # adds dict to keyword arguments
+        kwargs = dict(args[0].items() + kwargs.items()) if args and isinstance(args[0], dict) else kwargs
 
-            # deposit receipt is added when Dataverse.addStudy() is called on this study
-            self.lastDepositReceipt = None
-            
-            self.editUri = editUri
-            self.editMediaUri = editMediaUri
-            self.statementUri = statementUri
+        # deposit receipt is added when Dataverse.addStudy() is called on this study
+        self.lastDepositReceipt = None
 
-            # todo: add self.exists_on_dataverse / self.created
-            self.hostDataverse = hostDataverse # generally used for sword connection
+        # sets fields from kwargs
+        self.editUri = kwargs.pop('editUri') if 'editUri' in kwargs.keys() else None
+        self.editMediaUri = kwargs.pop('editMediaUri') if 'editMediaUri' in kwargs.keys() else None
+        self.statementUri = kwargs.pop('statementUri') if 'statementUri' in kwargs.keys() else None
+
+        # todo: add self.exists_on_dataverse / self.created
+        self.hostDataverse = kwargs.pop('hostDataverse') if 'hostDataverse' in kwargs.keys() else None
+
+        # creates sword entry from xml
+        if args and not isinstance(args[0], dict):
+            with open(args[0]) as f:
+                xml = f.read()
+            self.entry = sword2.Entry(xml)
+
+        # creates sword entry from keyword arguments
+        if kwargs:
+            if 'title' not in kwargs.keys() or isinstance(kwargs.get('title'), list):
+                raise Exception('Study needs a single, valid title.')
+
+            self.entry = sword2.Entry()
+
+            for k in kwargs.keys():
+                if isinstance(kwargs[k], list):
+                    for item in kwargs[k]:
+                        self.entry.add_field(format_term(k), item)
+                else:
+                    self.entry.add_field(format_term(k), kwargs[k])
 
     def __repr__(self):
         studyObject = pprint.pformat(self.__dict__)
@@ -68,42 +66,6 @@ class Study(object):
         entry=
 {eo}
 /STUDY ========= """.format(so=studyObject,eo=entryObject)
-                
-    @classmethod
-    def from_dict(cls, dict):
-        return cls(title=dict["title"],
-                   id=dict["id"],
-                   author=dict["author"],
-                   producer=dict["producer"],
-                   date=dict["date"],
-                   description=dict["description"],
-                   abstract=dict["abstract"],
-                   type=dict["type"],
-                   source=dict["source"],
-                   restriction=dict["restriction"],
-                   relation=dict["relation"],
-                   keyword=dict["keyword"],
-                   coverage=dict["coverage"],
-                   publication=dict["publication"],
-                   )
-    
-    @classmethod
-    def from_atom_xml_file(cls, xmlFilePath):
-        with open(xmlFilePath) as f:
-            xml = f.read()
-            study = cls.from_atom_xml_string(xml=xml)
-            
-        return study
-
-    @classmethod
-    def from_atom_xml_string(cls, xml):
-        title = utils.get_elements(xml,
-                                   namespace="http://purl.org/dc/terms/",
-                                   tag="title",
-                                   numberOfElements=1,
-                                   ).text
-
-        return cls(title, atomEntryXml=xml)
 
     @classmethod
     def from_entry_element(cls, entryElement, hostDataverse=None):

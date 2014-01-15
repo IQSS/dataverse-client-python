@@ -6,7 +6,7 @@ DEFAULT_CERT = "dvn_client/resources/dvn-4.hmdc.harvard.edu"
 EXAMPLE_DICT = {
     "title" : "ExampleTitle",
     "id" : "ExampleID",
-    "author" : "ExampleAuthor",
+    "author" : ["ExampleAuthor1", "ExampleAuthor2"],
     "producer" : "ExampleProducer",
     "date" : "1992-10-04",
     "description" : "ExampleDescription",
