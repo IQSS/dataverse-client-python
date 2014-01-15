@@ -11,13 +11,12 @@ import pprint
 from zipfile import ZipFile
 
 # downloaded modules
-from lxml import etree
 import sword2
 
 # local modules
 from file import DvnFile
-import utils
-from utils import format_term
+from utils import format_term, get_elements
+
 
 class Study(object):
     def __init__(self, *args, **kwargs):
@@ -68,37 +67,37 @@ class Study(object):
 /STUDY ========= """.format(so=studyObject,eo=entryObject)
 
     @classmethod
-    def from_entry_element(cls, entryElement, hostDataverse=None):
-        idElement = utils.get_elements(entryElement, 
-                                       tag="id", 
-                                       numberOfElements=1)
+    def from_entry_element(cls, entry_element, hostDataverse=None):
+        id_element = get_elements(entry_element,
+                                  tag="id",
+                                  numberOfElements=1)
                                     
-        titleElement = utils.get_elements(entryElement, 
-                                          tag="title",
-                                          numberOfElements=1)
+        title_element = get_elements(entry_element,
+                                     tag="title",
+                                     numberOfElements=1)
                                             
-        editMediaLinkElement = utils.get_elements(entryElement, 
-                                                  tag="link", 
-                                                  attribute="rel", 
-                                                  attributeValue="edit-media", 
-                                                  numberOfElements=1)
+        edit_media_link_element = get_elements(entry_element,
+                                               tag="link",
+                                               attribute="rel",
+                                               attributeValue="edit-media",
+                                               numberOfElements=1)
 
-        editMediaLink = editMediaLinkElement.get("href") if editMediaLinkElement is not None else None
+        edit_media_link = edit_media_link_element.get("href") if edit_media_link_element else None
 
-        return cls(title=titleElement.text,
-                   id=idElement.text,
-                   editUri=entryElement.base,   # edit iri
-                   editMediaUri=editMediaLink,
+        return cls(title=title_element.text,
+                   id=id_element.text,
+                   editUri=entry_element.base,   # edit iri
+                   editMediaUri=edit_media_link,
                    hostDataverse=hostDataverse)  # edit-media iri
                    
     def get_statement(self):
         if not self.statementUri:
             atomXml = self.get_entry()
-            statementLink = utils.get_elements(atomXml, 
-                                               tag="link", 
-                                               attribute="rel", 
-                                               attributeValue="http://purl.org/net/sword/terms/statement", 
-                                               numberOfElements=1)
+            statementLink = get_elements(atomXml,
+                                         tag="link",
+                                         attribute="rel",
+                                         attributeValue="http://purl.org/net/sword/terms/statement",
+                                         numberOfElements=1)
             self.statementUri = statementLink.get("href")
         
         studyStatement = self.hostDataverse.connection.swordConnection.get_resource(self.statementUri).content
@@ -110,11 +109,11 @@ class Study(object):
     def get_files(self):
         atomXml = self.get_entry()
         #print atomXml
-        statementLink = utils.get_elements(atomXml, 
-                                           tag="link", 
-                                           attribute="rel", 
-                                           attributeValue="http://purl.org/net/sword/terms/statement", 
-                                           numberOfElements=1)
+        statementLink = get_elements(atomXml,
+                                     tag="link",
+                                     attribute="rel",
+                                     attributeValue="http://purl.org/net/sword/terms/statement",
+                                     numberOfElements=1)
         studyStatementLink = statementLink.get("href")
 
         atomStatement = self.hostDataverse.connection.swordConnection.get_atom_sword_statement(studyStatementLink)
@@ -188,12 +187,12 @@ class Study(object):
             self.delete_file(f)
         
     def get_citation(self):
-        return utils.get_elements(self.get_entry(), namespace="http://purl.org/dc/terms/", tag="bibliographicCitation",
-                                  numberOfElements=1).text
+        return get_elements(self.get_entry(), namespace="http://purl.org/dc/terms/", tag="bibliographicCitation",
+                            numberOfElements=1).text
     
     def get_state(self):
-        return utils.get_elements(self.get_statement(), tag="category", attribute="term",
-                                  attributeValue="latestVersionState", numberOfElements=1).text
+        return get_elements(self.get_statement(), tag="category", attribute="term",
+                            attributeValue="latestVersionState", numberOfElements=1).text
     
     def get_id(self):
         urlPieces = self.editMediaUri.rsplit("/")
@@ -218,4 +217,3 @@ class Study(object):
             self.editMediaUri = deposit_receipt.edit_media
             self.statementUri = deposit_receipt.atom_statement_iri
         self.entry = sword2.Entry(atomEntryXml=self.get_entry())
-   
