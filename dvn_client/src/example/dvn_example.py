@@ -62,13 +62,13 @@ def main():
       
         # clean up the test dataverse
         # dv.delete_all_studies()
-        print "RELEASED:", dv.is_released()
+        # print "RELEASED:", dv.is_released()
 
+        # s = dv.get_studies()[0]
         # s = Study(EXAMPLE_DICT)
-        # print dv.get_studies()
-        s = Study(EXAMPLE_FILE)
+        # s = Study(EXAMPLE_FILE)
         # dv.add_study(s)
-        print s
+        # print s
 
         # print s.get_entry()
 

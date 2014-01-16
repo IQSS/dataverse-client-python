@@ -24,7 +24,7 @@ class Study(object):
         # adds dict to keyword arguments
         kwargs = dict(args[0].items() + kwargs.items()) if args and isinstance(args[0], dict) else kwargs
 
-        # deposit receipt is added when Dataverse.addStudy() is called on this study
+        # deposit receipt is added when Dataverse.add_study() is called on this study
         self.lastDepositReceipt = None
 
         # sets fields from kwargs
@@ -82,7 +82,7 @@ class Study(object):
                                                attributeValue="edit-media",
                                                numberOfElements=1)
 
-        edit_media_link = edit_media_link_element.get("href") if edit_media_link_element else None
+        edit_media_link = edit_media_link_element.get("href") if edit_media_link_element is not None else None
 
         return cls(title=title_element.text,
                    id=id_element.text,
@@ -216,4 +216,5 @@ class Study(object):
             self.editUri = deposit_receipt.edit
             self.editMediaUri = deposit_receipt.edit_media
             self.statementUri = deposit_receipt.atom_statement_iri
+            self.lastDepositReceipt = deposit_receipt
         self.entry = sword2.Entry(atomEntryXml=self.get_entry())

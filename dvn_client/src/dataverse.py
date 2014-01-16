@@ -46,6 +46,9 @@ class Dataverse(object):
         
     def delete_study(self, study):
         depositReceipt = self.connection.swordConnection.delete(study.editUri)
+        study.lastDepositReceipt = depositReceipt
+
+        # todo: Is this used? Should it be? Other ways to handle this?
         study.isDeleted = True
 
     # Note: Functionality removed

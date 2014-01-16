@@ -17,6 +17,7 @@ logging.basicConfig(level=logging.ERROR)
 from dvn_client.src.study import Study
 from dvn_client.src.connection import DvnConnection
 from dvn_client.src.example.config import DEFAULT_USERNAME, DEFAULT_CERT, DEFAULT_HOST, DEFAULT_PASSWORD
+from dvn_client.src.test.tests import PIC_OF_CAT, PICS_OF_CATS_STUDY, INGEST_FILES, ATOM_STUDY
     
 class TestStudyOperations(unittest.TestCase):
     @classmethod

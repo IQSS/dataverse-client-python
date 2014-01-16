@@ -17,7 +17,7 @@ def get_elements(rootElement, tag=None, namespace=None, attribute=None, attribut
     if namespace == None:
         namespace = rootElement.nsmap[None]
     #namespace = 'http://www.w3.org/1999/xhtml'
-    
+
     if not tag:
         xpath = "*"
     elif namespace == "":
