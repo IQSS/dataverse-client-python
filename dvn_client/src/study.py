@@ -106,30 +106,42 @@ class Study(object):
     def get_entry(self):
         return self.hostDataverse.connection.swordConnection.get_resource(self.editUri).content
 
-    def get_files(self):
-        atomXml = self.get_entry()
-        #print atomXml
-        statementLink = get_elements(atomXml,
-                                     tag="link",
-                                     attribute="rel",
-                                     attributeValue="http://purl.org/net/sword/terms/statement",
-                                     numberOfElements=1)
-        studyStatementLink = statementLink.get("href")
+    def get_file(self, file_name):
+        for f in self.get_files():
+            if file_name == f.name:
+                return f
 
-        atomStatement = self.hostDataverse.connection.swordConnection.get_atom_sword_statement(studyStatementLink)
+    def get_files(self):
+        if not self.statementUri:
+            atomXml = self.get_entry()
+            statementLink = get_elements(atomXml,
+                                         tag="link",
+                                         attribute="rel",
+                                         attributeValue="http://purl.org/net/sword/terms/statement",
+                                         numberOfElements=1)
+            self.statementUri = statementLink.get("href")
+
+        atomStatement = self.hostDataverse.connection.swordConnection.get_atom_sword_statement(self.statementUri)
 
         return [DvnFile.CreateFromAtomStatementObject(res, self) for res in atomStatement.resources]
-        # files = []
-        # for res in atomStatement.resources:
-        #     f = DvnFile.CreateFromAtomStatementObject(res, self)
-        #     files.append(f)
-        #
-        # return files
         
-    def add_file(self, file):
-        self.add_files([file])
+    def add_file(self, filepath):
+        self.add_files([filepath])
 
     def add_files(self, filepaths):
+        # convert a directory to a list of files
+        if len(filepaths) == 1 and os.path.isdir(filepaths[0]):
+            path = os.path.normpath(filepaths.pop()) + os.sep
+            for filename in os.listdir(path):
+                filepaths.append(path + filename)
+            print filepaths
+
+        # Todo: Handle file versions
+        for filepath in filepaths:
+            filename = os.path.basename(filepath)
+            if filename in [f.name for f in self.get_files()]:
+                raise ValueError('The file {} already exists on the DataVerse'.format(filename))
+
         print "Uploading files: ", filepaths
         
         deleteAfterUpload = False
@@ -144,7 +156,7 @@ class Study(object):
         # todo no need to guess: it's a zip!
         fileMimetype = mimetypes.guess_type(filepath, strict=True)
         filename = os.path.basename(filepath)
-        
+
         with open(filepath, "rb") as pkg:
             depositReceipt = self.hostDataverse.connection.swordConnection.append(
                 dr=self.lastDepositReceipt,
@@ -155,7 +167,7 @@ class Study(object):
                 packaging='http://purl.org/net/sword/package/SimpleZip')
 
             self._refresh(deposit_receipt=depositReceipt)
-        
+
         if deleteAfterUpload:
             print "Deleting temporary zip file: ", filepath
             os.remove(filepath)    
