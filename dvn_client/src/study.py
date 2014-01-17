@@ -15,7 +15,7 @@ import sword2
 
 # local modules
 from file import DvnFile
-from utils import format_term, get_elements
+from utils import format_term, get_elements, DvnException
 
 
 class Study(object):
@@ -136,8 +136,10 @@ class Study(object):
         # Todo: Handle file versions
         for filepath in filepaths:
             filename = os.path.basename(filepath)
-            if filename in [f.name for f in self.get_files()]:
-                raise ValueError('The file {} already exists on the DataVerse'.format(filename))
+            if os.path.getsize(filepath) < 5:
+                raise DvnException('The DataVerse does not accept files less than 5 bytes.')
+            elif filename in [f.name for f in self.get_files()]:
+                raise DvnException('The file {} already exists on the DataVerse'.format(filename))
 
         print "Uploading files: ", filepaths
         
@@ -159,12 +161,12 @@ class Study(object):
                 payload=pkg,
                 mimetype='application/zip',
                 filename=filename,
-                packaging='http://purl.org/net/sword/package/SimpleZip')
+                packaging='http://purl.org/net/sword/package/SimpleZip',
+            )
 
             self._refresh(deposit_receipt=depositReceipt)
 
         if deleteAfterUpload:
-            print "Deleting temporary zip file: ", filepath
             os.remove(filepath)    
     
     def update_metadata(self):

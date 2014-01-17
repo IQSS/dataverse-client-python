@@ -7,6 +7,10 @@ REPLACEMENT_DICT = {'id': 'identifier', 'author': 'creator', 'producer': 'publis
                     'keyword': 'subject', 'publication': 'isReferencedBy'}
 
 
+class DvnException(Exception):
+    pass
+
+
 # factor out xpath operations so we don't have to look at its ugliness
 def get_elements(rootElement, tag=None, namespace=None, attribute=None, attributeValue=None, numberOfElements=None):
     # accept either an lxml.Element or a string of xml
