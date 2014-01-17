@@ -131,10 +131,7 @@ class Study(object):
     def add_files(self, filepaths):
         # convert a directory to a list of files
         if len(filepaths) == 1 and os.path.isdir(filepaths[0]):
-            path = os.path.normpath(filepaths.pop()) + os.sep
-            for filename in os.listdir(path):
-                filepaths.append(path + filename)
-            print filepaths
+            filepaths = self._open_directory(filepaths[0])
 
         # Todo: Handle file versions
         for filepath in filepaths:
@@ -153,8 +150,6 @@ class Study(object):
         else:
             filepath = filepaths[0]
 
-        # todo no need to guess: it's a zip!
-        fileMimetype = mimetypes.guess_type(filepath, strict=True)
         filename = os.path.basename(filepath)
 
         with open(filepath, "rb") as pkg:
@@ -162,7 +157,7 @@ class Study(object):
                 dr=self.lastDepositReceipt,
                 se_iri=self.editMediaUri,
                 payload=pkg,
-                mimetype=fileMimetype,
+                mimetype='application/zip',
                 filename=filename,
                 packaging='http://purl.org/net/sword/package/SimpleZip')
 
@@ -220,7 +215,18 @@ class Study(object):
         zipFile.close()
             
         return zipFilePath
-    
+
+    def _open_directory(self, path):
+        path = os.path.normpath(path) + os.sep
+        filepaths = []
+        for filename in os.listdir(path):
+            filepath = path + filename
+            if os.path.isdir(filepath):
+                filepaths += self._open_directory(filepath)
+            else:
+                filepaths.append(filepath)
+        return filepaths
+
     # if we perform a server operation, we should refresh the study object
     def _refresh(self, deposit_receipt=None):
         # todo is it possible for the deposit receipt to have different info than the study?
