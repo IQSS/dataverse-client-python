@@ -26,33 +26,31 @@ You will need:
 
 Once you have satisfied the above requirements, try the following commands.
 
-   $ git clone https://github.com/IQSS/dvn-client-python.git
-   $ cd dvn-client-python
-   $ virtualenv venv
-   $ source venv/bin/activate
-   $ pip install -r dvn_client/src/requirements.txt
+    $ git clone https://github.com/IQSS/dvn-client-python.git
+    $ cd dvn-client-python
+    $ virtualenv venv
+    $ source venv/bin/activate
+    $ pip install -r dvn_client/src/requirements.txt
 
 You may wish to manage virtualenvs using [virtualenvwrapper](http://virtualenvwrapper.readthedocs.org/en/latest/) instead.
 
 ## Configuration
 
-You need a config.py file to run. Copy `dvn-client-python/dvn-client/src/config.py-dist`
-to your own config.py and fill out the config elements as appropriate.
+Make a `config_local.py` file and fill out the config elements as appropriate. Do not commit this file.
 
 ```python
-
-    DEFAULT_USERNAME = ""
-    DEFAULT_PASSWORD = ""
-    DEFAULT_HOST = ""
-    DEFAULT_CERT = "../resources/dvn-build.hmdc.harvard.edu" #see below for info on the cert
-    
+DEFAULT_USERNAME = ""
+DEFAULT_PASSWORD = ""
+DEFAULT_HOST = "dvn-4.hmdc.harvard.ed"
+DEFAULT_CERT = "../resources/dvn-4.hmdc.harvard.edu" #see below for info on the cert
 ```
 
 ## Installation Test
 
 * Navigate to `dvn-client-python/dvn-client/src/`
-* Run the client `python dvn_client.py --config config.py --runTests tests.py`
-* To run the tests, run `python dvn_test.py` (for more options see [unittest](http://docs.python.org/2/library/unittest.html#assert-methods))
+* Edit test data in `tests.py` as appropriate
+* Run the client `python dvn_client.py`
+* To run all of the tests, run `python dvn_test.py` (for more options see [unittest](http://docs.python.org/2/library/unittest.html#assert-methods))
 
 ## PEM Certificate (optional)
 
