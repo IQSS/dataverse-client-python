@@ -11,6 +11,7 @@ import sword2
 #local modules
 import utils
 
+
 class DvnFile(object):
     def __init__(self, name, editMediaUri, mimetype, updated, hostStudy):
         self.name = name
@@ -18,6 +19,7 @@ class DvnFile(object):
         self.mimetype = mimetype
         self.updated = updated
         self.hostStudy = hostStudy
+        self.fileId = editMediaUri.split('/')[-2]
         
     def __repr__(self):
         return """
@@ -25,7 +27,8 @@ class DvnFile(object):
     Name: {0}
     Uri: {1}
     Mime: {2}
-    """.format(self.name, self.editMediaUri, self.mimetype)
+    Id: {3}
+    """.format(self.name, self.editMediaUri, self.mimetype, self.fileId)
 
     # Note: Information about files comes from the statement of the study, not the entry
     # # TODO untested!!!!!!!
@@ -58,4 +61,3 @@ class DvnFile(object):
         # Note: Updated element is meaningless at the moment
         updated = datetime.strptime(atomStatementEntry.updated, "%Y-%m-%dT%H:%M:%S.%fZ")
         return cls(name, editMediaUri, mimetype, updated, hostStudy)
-        

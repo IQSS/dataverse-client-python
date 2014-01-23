@@ -137,7 +137,8 @@ class Study(object):
         for filepath in filepaths:
             filename = os.path.basename(filepath)
             if os.path.getsize(filepath) < 5:
-                raise DvnException('The DataVerse does not accept files less than 5 bytes.')
+                raise DvnException('The DataVerse does not currently accept files less than 5 bytes. '
+                                   '{} cannot be uploaded.'.format(filename))
             elif filename in [f.name for f in self.get_files()]:
                 raise DvnException('The file {} already exists on the DataVerse'.format(filename))
 
@@ -155,9 +156,8 @@ class Study(object):
         filename = os.path.basename(filepath)
 
         with open(filepath, "rb") as pkg:
-            depositReceipt = self.hostDataverse.connection.swordConnection.append(
-                dr=self.lastDepositReceipt,
-                se_iri=self.editMediaUri,
+            depositReceipt = self.hostDataverse.connection.swordConnection.add_file_to_resource(
+                edit_media_iri=self.editMediaUri,
                 payload=pkg,
                 mimetype='application/zip',
                 filename=filename,
