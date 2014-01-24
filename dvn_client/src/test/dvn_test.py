@@ -14,8 +14,9 @@ import logging
 logging.basicConfig(level=logging.ERROR)
 
 #local modules
-from study import Study
-from connection import DvnConnection
+from dvn_client.src.study import Study
+from dvn_client.src.connection import DvnConnection
+from dvn_client.src.example.config import DEFAULT_USERNAME, DEFAULT_CERT, DEFAULT_HOST, DEFAULT_PASSWORD
     
 class TestStudyOperations(unittest.TestCase):
     @classmethod
@@ -24,7 +25,7 @@ class TestStudyOperations(unittest.TestCase):
         
         print "Loading test data."
         testModulePath = os.path.dirname(__file__)
-        execfile(os.path.join(testModulePath, "config.py"), globals())    #CREDS - This file is not committed.
+        execfile(os.path.join(testModulePath, "../example/config.py"), globals())    #CREDS - This file is not committed.
         execfile(os.path.join(testModulePath, "tests.py"), globals())     #TEST DATA
         
         print "Connecting to DVN."

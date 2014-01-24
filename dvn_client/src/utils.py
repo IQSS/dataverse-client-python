@@ -21,7 +21,9 @@ def get_elements(rootElement, tag=None, namespace=None, attribute=None, attribut
         xpath = tag
     else:
         xpath = "{{{ns}}}{tg}".format(ns=namespace, tg=tag)
-    
+
+    #print xpath
+
     if attribute and not attributeValue:
         xpath += "[@{att}]".format(att=attribute)
     elif not attribute and attributeValue:
@@ -34,7 +36,10 @@ def get_elements(rootElement, tag=None, namespace=None, attribute=None, attribut
         elements = rootElement.findall(xpath)
         
         if numberOfElements and len(elements) != numberOfElements:
-            raise Exception("Wrong number of elements found. Expected {0} and found {1}.".format(numberOfElements, len(elements)))
+            raise Exception("Wrong number of elements found. Expected {0} and found {1}.".format(
+                numberOfElements,
+                len(elements),
+            ))
         
     except Exception as e:
         print """

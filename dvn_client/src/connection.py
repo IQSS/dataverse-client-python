@@ -16,6 +16,7 @@ import sword2
 #local modules
 from dataverse import Dataverse
 
+
 class DvnConnection(object):
     # todo add port number
     def __init__(self, username, password, host, cert=None, sdUriOverride=None):

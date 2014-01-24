@@ -18,19 +18,20 @@ import sword2
 from file import DvnFile
 import utils
 
+
 class Study(object):
     def __init__(self, title, id=None, author=None, abstract=None, editUri=None, editMediaUri=None, statementUri=None, hostDataverse=None, atomEntryXml=None):
             # Create SWORD Entry with Metadata for study
             self.entry = sword2.Entry(atomEntryXml=atomEntryXml,
-                      id=id,
-                      title=title,
-                      author=author,
-                      dcterms_abstract = abstract,
+                      #id=id,
+                      #title=title,
+                      #author=author,
+                      #dcterms_abstract = abstract,
                       dcterms_title=title,
-                      dcterms_creator=author)
+                      #dcterms_creator=author,
+            )
                       
-            # deposit receipt is added when Dataverse.addStudy() is called on
-            # this study
+            # deposit receipt is added when Dataverse.addStudy() is called on this study
             self.lastDepositReceipt = None 
             
             self.editUri = editUri

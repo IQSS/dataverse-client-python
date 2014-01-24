@@ -19,8 +19,9 @@ import traceback
 #downloaded modules
 
 #local modules
-from study import Study
-from connection import DvnConnection
+from dvn_client.src.study import Study
+from dvn_client.src.connection import DvnConnection
+from config import DEFAULT_PASSWORD, DEFAULT_HOST, DEFAULT_CERT, DEFAULT_USERNAME, EXAMPLE_FILE
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='dvn_client exercises the APIs available for a DataVerse Network')
@@ -61,9 +62,10 @@ def main():
         # clean up the test dataverse
         #dv.delete_all_studies()
         print "RELEASED: ", dv.is_released()
-        
+
+        #s = Study(title="My Very Own Study")
         #s = Study.CreateStudyFromDict(PICS_OF_CATS_STUDY)
-        s = Study.CreateStudyFromAtomEntryXmlFile("/home/vagrant/dvn_client/resources/atom-entry-study.xml")
+        s = Study.CreateStudyFromAtomEntryXmlFile(EXAMPLE_FILE)
         dv.add_study(s)
         #s.add_files([INGEST_FILES])
         print s.get_citation()
