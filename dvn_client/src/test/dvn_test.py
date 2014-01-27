@@ -14,8 +14,10 @@ import logging
 logging.basicConfig(level=logging.ERROR)
 
 #local modules
-from study import Study
-from connection import DvnConnection
+from dvn_client.src.study import Study
+from dvn_client.src.connection import DvnConnection
+from dvn_client.src.example.config import DEFAULT_USERNAME, DEFAULT_CERT, DEFAULT_HOST, DEFAULT_PASSWORD
+from dvn_client.src.test.tests import PIC_OF_CAT, PICS_OF_CATS_STUDY, INGEST_FILES, ATOM_STUDY
     
 class TestStudyOperations(unittest.TestCase):
     @classmethod
@@ -24,7 +26,7 @@ class TestStudyOperations(unittest.TestCase):
         
         print "Loading test data."
         testModulePath = os.path.dirname(__file__)
-        execfile(os.path.join(testModulePath, "config.py"), globals())    #CREDS - This file is not committed.
+        execfile(os.path.join(testModulePath, "../example/config.py"), globals())    #CREDS - This file is not committed.
         execfile(os.path.join(testModulePath, "tests.py"), globals())     #TEST DATA
         
         print "Connecting to DVN."
@@ -43,7 +45,7 @@ class TestStudyOperations(unittest.TestCase):
         #runs before each test method
         
         #create a study for each test
-        s = Study.CreateStudyFromDict(PICS_OF_CATS_STUDY)
+        s = Study.from_dict(PICS_OF_CATS_STUDY)
         self.dv.add_study(s)
         id = s.get_id()
         self.s = self.dv.get_study_by_hdl(id)
@@ -57,7 +59,7 @@ class TestStudyOperations(unittest.TestCase):
             return
     
     def test_create_study_from_xml(self):
-        xmlStudy = Study.CreateStudyFromAtomEntryXmlFile(ATOM_STUDY)
+        xmlStudy = Study.from_atom_xml_file(ATOM_STUDY)
         self.dv.add_study(xmlStudy)
         atomStudy = self.dv.get_study_by_string_in_entry("The first study for the New England Journal of Coffee dataverse")
         self.assertTrue(atomStudy)
@@ -104,7 +106,7 @@ class TestStudyOperations(unittest.TestCase):
         self.assertTrue(len(catFile) == 0)
         
     def test_delete_a_study(self):
-        xmlStudy = Study.CreateStudyFromAtomEntryXmlFile(ATOM_STUDY)
+        xmlStudy = Study.from_atom_xml_file(ATOM_STUDY)
         self.dv.add_study(xmlStudy)
         atomStudy = self.dv.get_study_by_string_in_entry("The first study for the New England Journal of Coffee dataverse")
         self.assertTrue(atomStudy)
