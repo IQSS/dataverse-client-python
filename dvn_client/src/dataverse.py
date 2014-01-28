@@ -4,10 +4,10 @@ __date__ ="$Jul 30, 2013 12:32:24 PM$"
 # python base lib modules
 import pprint
 
-# downloaded modules
+#downloaded modules
 from lxml import etree
 
-# local modules
+#local modules
 from study import Study
 import utils
 
@@ -29,15 +29,14 @@ class Dataverse(object):
             collectionInfo,
             namespace="http://purl.org/net/sword/terms/state",
             tag="dataverseHasBeenReleased",
-            numberOfElements=1,
+            numberOfElements=1
         ).text
         return bool(status)
 
-    def add_study(self, study):
-        # this creates the study AND generates a deposit receipt
+    def add_study(self, study):        
         depositReceipt = self.connection.swordConnection.create(
-            col_iri=self.collection.href,
             metadata_entry=study.entry,
+            col_iri=self.collection.href
         )
                                                      
         study.hostDataverse = self
@@ -46,9 +45,6 @@ class Dataverse(object):
         
     def delete_study(self, study):
         depositReceipt = self.connection.swordConnection.delete(study.editUri)
-        study.lastDepositReceipt = depositReceipt
-
-        # todo: Is this used? Should it be? Other ways to handle this?
         study.isDeleted = True
 
     # Note: Functionality removed
@@ -70,13 +66,13 @@ class Dataverse(object):
         studiesResponse = self.connection.swordConnection.get_resource(self.collection.href)
 
         return [
-            Study.from_entry_element(element, hostDataverse=self)
+            Study.CreateStudyFromEntryElement(element, hostDataverse=self)
             for element in utils.get_elements(studiesResponse.content, tag='entry')
         ]
         # # get all the entry nodes and parse them into study objects
         # studies = []
         # for element in utils.get_elements(studiesResponse.content, tag="entry"):
-        #     s = Study.from_entry_element(element, hostDataverse=self)
+        #     s = Study.CreateStudyFromEntryElement(element, hostDataverse=self)
         #     studies.append(s)
         #
         # return studies

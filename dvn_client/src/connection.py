@@ -16,7 +16,6 @@ import sword2
 #local modules
 from dataverse import Dataverse
 
-
 class DvnConnection(object):
     # todo add port number
     def __init__(self, username, password, host, cert=None, sdUriOverride=None):
@@ -24,8 +23,7 @@ class DvnConnection(object):
         self.username = username
         self.password = password
         self.host = host
-        self.sdUri = "https://{host}/dvn/api/data-deposit/v1/swordv2/service-document".format(host=self.host) \
-            if not sdUriOverride else sdUriOverride.format(host=self.host)
+        self.sdUri = "https://{host}/dvn/api/data-deposit/v1/swordv2/service-document".format(host=self.host) if not sdUriOverride else sdUriOverride.format(host=self.host)
         self.cert = cert
         
         # Connection Status and SWORD Properties
@@ -41,12 +39,10 @@ class DvnConnection(object):
 
     # todo raise exception if connection fails?
     def _connect(self):
-        self.swordConnection = sword2.Connection(
-            service_document_iri=self.sdUri,
-            user_name=self.username,
-            user_pass=self.password,
-            ca_certs=self.cert,
-        )
+        self.swordConnection = sword2.Connection(self.sdUri, 
+                      user_name = self.username,
+                      user_pass = self.password, 
+                      ca_certs = self.cert)
         
         self.serviceDocument = self.swordConnection.get_service_document()
         self.connected = True
