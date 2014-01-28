@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # DVN client for SWORD API
 # Prereqs: Python, sword2 Module (available using easy_install)
 # Adapted from: https://bitbucket.org/beno/python-sword2/wiki/Quickstart
@@ -31,16 +33,19 @@ def parse_arguments():
 #    parser.add_argument('-u','--username', default=None, help='Description for foo argument')
 #    parser.add_argument('-p','--password', default=None, help='Description for bar argument')
     
-    parser.add_argument('--runTests', action="store", help='Path to a file with test definitions.')
-    parser.add_argument('--config', action="store", help="Path to a file that contains configuration information.")
+    parser.add_argument('--runTests', action="store", default='tests.py',
+            help='Path to a file with test definitions. (default: tests.py)')
+    parser.add_argument('--config', action="store", default='config.py',
+            help="Path to a file that contains configuration information. (default: config.py)")
     return parser.parse_args()
 
 def main():
     # Get the command line arguments.
     args = parse_arguments()
-    
-    if args.runTests and args.config:
+
+    if args.config:
         execfile(args.config, globals())
+    if args.runTests:
         execfile(args.runTests, globals())
     
     dv = None #declare outside so except clause has access
@@ -63,7 +68,7 @@ def main():
         print "RELEASED: ", dv.is_released()
         
         #s = Study.CreateStudyFromDict(PICS_OF_CATS_STUDY)
-        s = Study.CreateStudyFromAtomEntryXmlFile("/home/vagrant/dvn_client/resources/atom-entry-study.xml")
+        s = Study.CreateStudyFromAtomEntryXmlFile(ATOM_STUDY)
         dv.add_study(s)
         #s.add_files([INGEST_FILES])
         print s.get_citation()
