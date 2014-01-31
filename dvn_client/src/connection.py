@@ -47,7 +47,7 @@ class DvnConnection(object):
             user_pass=self.password,
             ca_certs=self.cert,
         )
-        
+
         self.serviceDocument = self.swordConnection.get_service_document()
         self.connected = True
         
@@ -60,8 +60,3 @@ class DvnConnection(object):
 
         # Cast SWORD collections to Dataverses
         return [Dataverse(self, col) for col in collections]
-        # dvs = []
-        # for col in collections:
-        #     dvs.append(Dataverse(self, col))
-        #
-        # return dvs
