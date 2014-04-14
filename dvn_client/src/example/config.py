@@ -1,6 +1,6 @@
-DEFAULT_USERNAME = "rliebz"
-DEFAULT_PASSWORD = "other"
-DEFAULT_HOST = "dvn-4.hmdc.harvard.edu"
+DEFAULT_USERNAME = "changeme"
+DEFAULT_PASSWORD = "changeme"
+DEFAULT_HOST = "dvn-demo.iq.harvard.edu"
 DEFAULT_CERT = "dvn_client/resources/dvn-4.hmdc.harvard.edu"
 
 EXAMPLE_DICT = {
