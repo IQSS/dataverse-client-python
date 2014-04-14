@@ -9,13 +9,14 @@ import mimetypes
 import os
 import pprint
 import StringIO
+import requests
 from zipfile import ZipFile
 
 # downloaded modules
 import sword2
 
 # local modules
-from file import DvnFile
+from file import DvnFile, ReleasedFile
 from utils import format_term, get_elements, DvnException
 
 
@@ -115,15 +116,13 @@ class Study(object):
     def get_entry(self):
         return self.hostDataverse.connection.swordConnection.get_resource(self.editUri).content
 
-    def get_file(self, file_name):
-        for f in self.get_files():
-            if file_name == f.name:
-                return f
+    def get_file(self, file_name, released=False):
+        files = self.get_released_files() if released else self.get_files()
+        return next(f for f in files if f.name == file_name)
 
-    def get_file_by_id(self, file_id):
-        for f in self.get_files():
-            if file_id == f.id:
-                return f
+    def get_file_by_id(self, file_id, released=False):
+        files = self.get_released_files() if released else self.get_files()
+        return next(f for f in files if f.id == file_id)
 
     def get_files(self):
         if not self.statementUri:
@@ -138,7 +137,29 @@ class Study(object):
         atomStatement = self.hostDataverse.connection.swordConnection.get_atom_sword_statement(self.statementUri)
 
         return [DvnFile.CreateFromAtomStatementObject(res, self) for res in atomStatement.resources]
-        
+
+    def get_released_files(self):
+        '''
+        Uses data sharing API to retrieve a list of files from the most
+        recently released version of the study
+        '''
+        download_url = 'https://{0}/dvn/api/metadata/{1}'.format(
+            self.hostDataverse.connection.host, self.doi
+        )
+        xml = requests.get(download_url).content
+        elements = get_elements(xml, tag='otherMat')
+
+        files = []
+        for element in elements:
+            f = ReleasedFile(
+                name=element[0].text,
+                uri=element.attrib.get('URI'),
+                hostStudy=self,
+            )
+            files.append(f)
+
+        return files
+
     def add_file(self, filepath):
         self.add_files([filepath])
 
