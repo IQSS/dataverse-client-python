@@ -97,17 +97,22 @@ class Study(object):
         urlPieces = self.editMediaUri.rsplit("/")
         return '/'.join([urlPieces[-3], urlPieces[-2], urlPieces[-1]])
 
-    def get_title(self):
-        return get_elements(self.get_statement(), tag='title', numberOfElements=1).text
+    @property
+    def title(self):
+        return get_elements(
+            self.get_statement(), tag='title', numberOfElements=1
+        ).text
 
     def get_statement(self):
         if not self.statementUri:
             atomXml = self.get_entry()
-            statementLink = get_elements(atomXml,
-                                         tag="link",
-                                         attribute="rel",
-                                         attributeValue="http://purl.org/net/sword/terms/statement",
-                                         numberOfElements=1)
+            statementLink = get_elements(
+                atomXml,
+                tag="link",
+                attribute="rel",
+                attributeValue="http://purl.org/net/sword/terms/statement",
+                numberOfElements=1,
+            )
             self.statementUri = statementLink.get("href")
         
         studyStatement = self.hostDataverse.connection.swordConnection.get_resource(self.statementUri).content
@@ -117,12 +122,16 @@ class Study(object):
         return self.hostDataverse.connection.swordConnection.get_resource(self.editUri).content
 
     def get_file(self, file_name, released=False):
+
+        # Search released study if specified; otherwise, search draft
         files = self.get_released_files() if released else self.get_files()
-        return next(f for f in files if f.name == file_name)
+        return next((f for f in files if f.name == file_name), None)
 
     def get_file_by_id(self, file_id, released=False):
+
+        # Search released study if specified; otherwise, search draft
         files = self.get_released_files() if released else self.get_files()
-        return next(f for f in files if f.id == file_id)
+        return next((f for f in files if f.id == file_id), None)
 
     def get_files(self):
         if not self.statementUri:
