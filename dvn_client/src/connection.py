@@ -49,7 +49,7 @@ class DvnConnection(object):
         )
 
         self.serviceDocument = self.swordConnection.get_service_document()
-        self.connected = True
+        self.connected = True if hasattr(self.swordConnection, 'workspaces') else False
         
     def get_dataverses(self):
         # TODO peterbull: Do we need to call the API again to make sure

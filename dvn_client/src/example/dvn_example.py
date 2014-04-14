@@ -61,14 +61,22 @@ def main():
         dv = dvs[0]
       
         # clean up the test dataverse
-        # dv.delete_all_studies()
+        # for study in dv.get_studies():
+        #     dv.delete_study(study)
         # print "RELEASED:", dv.is_released()
 
-        # s = dv.get_studies()[0]
+        s = dv.get_studies()[0]
         # s = Study(EXAMPLE_DICT)
         # s = Study(EXAMPLE_FILE)
-        # dv.add_study(s)
+
         # print s
+        print s.get_id()
+
+        # s.delete_all_files()
+        # f = s.get_files()[0]
+        s.add_file("dvn_client/resources/test/one.txt")
+
+        # s.add_file("dvn_client/resources/test")
 
         # print s.get_entry()
 

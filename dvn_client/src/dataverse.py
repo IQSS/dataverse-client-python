@@ -31,11 +31,15 @@ class Dataverse(object):
             tag="dataverseHasBeenReleased",
             numberOfElements=1,
         ).text
-        return bool(status)
+        return status.lower() == 'true'
 
     @property
     def alias(self):
         return self.collection.href.split('/')[-1]
+
+    @property
+    def title(self):
+        return self.collection.title
 
     def add_study(self, study):
         # this creates the study AND generates a deposit receipt
