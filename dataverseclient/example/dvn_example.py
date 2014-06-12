@@ -51,7 +51,7 @@ def main():
         # s = Study(EXAMPLE_FILE)
 
         # print s
-        print s.get_id()
+        print s.doi
 
         # s.delete_all_files()
         # s.add_file("dataverseclient/resources/test/one.txt")

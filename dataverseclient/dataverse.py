@@ -2,7 +2,6 @@ __author__="peterbull"
 __date__ ="$Jul 30, 2013 12:32:24 PM$"
 
 # python base lib modules
-import pprint
 
 # downloaded modules
 from lxml import etree
@@ -18,7 +17,7 @@ class Dataverse(object):
         self.collection = collection
         
     def __repr__(self):
-        return pprint.saferepr(self.__dict__)
+        return '<Dataverse Object: {0} ({1})>'.format(self.title, self.alias)
 
     # Note: is_released is a Dataverse concept--not from SWORD
     @property
@@ -43,21 +42,18 @@ class Dataverse(object):
 
     def add_study(self, study):
         # this creates the study AND generates a deposit receipt
-        depositReceipt = self.connection.swordConnection.create(
+        receipt = self.connection.swordConnection.create(
             col_iri=self.collection.href,
             metadata_entry=study.entry,
         )
                                                      
-        study.hostDataverse = self
+        study.dataverse = self
         # todo: study.exists = True
-        study._refresh(deposit_receipt=depositReceipt)
+        study._refresh(deposit_receipt=receipt)
         
     def delete_study(self, study):
-        depositReceipt = self.connection.swordConnection.delete(study.editUri)
-        study.lastDepositReceipt = depositReceipt
-
-        # todo: Is this used? Should it be? Other ways to handle this?
-        study.isDeleted = True
+        receipt = self.connection.swordConnection.delete(study.edit_uri)
+        study.last_receipt = receipt
 
     # Note: Functionality removed
     # def delete_all_studies(self, bigHammer=False, ignoreExceptions=False):
@@ -75,34 +71,18 @@ class Dataverse(object):
     #                     raise e
         
     def get_studies(self):
-        studiesResponse = self.connection.swordConnection.get_resource(self.collection.href)
-
-        return [
-            Study.from_entry_element(element, hostDataverse=self)
-            for element in utils.get_elements(studiesResponse.content, tag='entry')
-        ]
-
-    def get_study_by_title(self, title):
-        return next((s for s in self.get_studies() if s.title == title), None)
+        response = self.connection.swordConnection.get_resource(self.collection.href)
+        entries = utils.get_elements(response.content, tag='entry')
+        return [Study.from_entry(entry, dataverse=self) for entry in entries]
 
     def get_study_by_doi(self, doi):
         return next((s for s in self.get_studies() if s.doi == doi), None)
 
-    # todo: rename to global_id
-    def get_study_by_hdl(self, hdl):
-        studies = self.get_studies()
-        
-        #TODO peterbull: Regex hdl to make sure it is a valid handle
-        
-        for s in studies:
-            if hdl in s.editUri:
-                return s
-        return None
-    
+    def get_study_by_title(self, title):
+        return next((s for s in self.get_studies() if s.title == title), None)
+
     def get_study_by_string_in_entry(self, string):
-        studies = self.get_studies()
-        
-        for s in studies:
-            if string in s.entry.pretty_print():
-                return s
-        return None
+        return next(
+            (s for s in self.get_studies() if string in s.entry.pretty_print()),
+            None
+        )

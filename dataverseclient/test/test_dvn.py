@@ -10,20 +10,41 @@ from dataverseclient.study import Study
 from dataverseclient.connection import DvnConnection
 from dataverseclient.example.config import DEFAULT_USERNAME, DEFAULT_HOST, DEFAULT_PASSWORD
 from dataverseclient.test.config import PICS_OF_CATS_STUDY, ATOM_STUDY
+from dataverseclient import utils
 
+
+class TestStudy(unittest.TestCase):
+
+    def test_init(self):
+        study = Study(title='My Study', publisher='Mr. Pub Lisher')
+        title = utils.get_element(
+            study.entry.pretty_print(),
+            namespace='dcterms',
+            tag='title'
+        ).text
+        publisher = utils.get_element(
+            study.entry.pretty_print(),
+            namespace='dcterms',
+            tag='publisher'
+        ).text
+        self.assertEqual(title, 'My Study')
+        self.assertEqual(publisher, 'Mr. Pub Lisher')
 
 class TestStudyOperations(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         
         print "Connecting to DVN."
-        self.dvc = DvnConnection(username=DEFAULT_USERNAME,
-                        password=DEFAULT_PASSWORD,
-                        host=DEFAULT_HOST, 
-                        disable_ssl_certificate_validation=True)
+        self.dvc = DvnConnection(
+            username=DEFAULT_USERNAME,
+            password=DEFAULT_PASSWORD,
+            host=DEFAULT_HOST,
+            disable_ssl_certificate_validation=True
+        )
                         
         print "Getting Dataverse"
         self.dv = self.dvc.get_dataverses()[0]
+        self.dv.is_released
         
         print "Removing any existing studies."
         studies = self.dv.get_studies()
@@ -35,7 +56,7 @@ class TestStudyOperations(unittest.TestCase):
         #runs before each test method
         
         #create a study for each test
-        s = Study(PICS_OF_CATS_STUDY)
+        s = Study(**PICS_OF_CATS_STUDY)
         self.dv.add_study(s)
         doi = s.doi
         self.s = self.dv.get_study_by_doi(doi)
@@ -49,15 +70,23 @@ class TestStudyOperations(unittest.TestCase):
             return
     
     def test_create_study_from_xml(self):
-        xmlStudy = Study(ATOM_STUDY)
-        self.dv.add_study(xmlStudy)
-        atomStudy = self.dv.get_study_by_title("Roasting at Home")
-        self.assertTrue(atomStudy)
-        self.dv.delete_study(atomStudy)
-        
-    def test_add_file_obj(self):
-        self.s.add_file_obj('file.txt', 'This is a simple text file!')
-        self.s.add_file_obj('file2.txt', 'This is the second simple text file!')
+        new_study = Study.from_xml_file(ATOM_STUDY)
+        self.dv.add_study(new_study)
+        retrieved_study = self.dv.get_study_by_title("Roasting at Home")
+        self.assertTrue(retrieved_study)
+        self.dv.delete_study(retrieved_study)
+
+    def test_add_files(self):
+        self.s.add_files(['test_dvn.py', 'config.py'])
+        sleep(3) #wait for ingest
+        actual_files = [f.name for f in self.s.get_files()]
+
+        self.assertIn('test_dvn.py', actual_files)
+        self.assertIn('config.py', actual_files)
+
+    def test_upload_file(self):
+        self.s.upload_file('file.txt', 'This is a simple text file!')
+        self.s.upload_file('file2.txt', 'This is the second simple text file!')
         sleep(3) #wait for ingest
         actual_files = [f.name for f in self.s.get_files()]
         
@@ -77,7 +106,7 @@ class TestStudyOperations(unittest.TestCase):
         self.assertTrue(self.s.get_statement())
     
     def test_delete_a_file(self):
-        self.s.add_file_obj('cat.jpg', b'Whatever a cat looks like goes here.')
+        self.s.upload_file('cat.jpg', b'Whatever a cat looks like goes here.')
         
         #add file and confirm
         files = self.s.get_files()
@@ -91,7 +120,7 @@ class TestStudyOperations(unittest.TestCase):
         self.assertTrue(len(cat_file) == 0)
         
     def test_delete_a_study(self):
-        xmlStudy = Study(ATOM_STUDY)
+        xmlStudy = Study.from_xml_file(ATOM_STUDY)
         self.dv.add_study(xmlStudy)
         atomStudy = self.dv.get_study_by_title("Roasting at Home")
         self.assertTrue(atomStudy)

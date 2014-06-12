@@ -9,47 +9,42 @@ import mimetypes
 import os
 import pprint
 import StringIO
-import requests
 from zipfile import ZipFile
 
 # downloaded modules
 import sword2
+import requests
 
 # local modules
 from file import DvnFile, ReleasedFile
-from utils import format_term, get_elements, DvnException, sanitize
+from utils import format_term, get_element, get_elements, DvnException, sanitize
 
 
 class Study(object):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, entry=None, title=None, dataverse=None,
+                 edit_uri=None, edit_media_uri=None, statement_uri=None,
+                 **kwargs):
 
-        # adds dict to keyword arguments
-        kwargs = dict(args[0].items() + kwargs.items()) if args and isinstance(args[0], dict) else kwargs
+        # Deposit receipt is added when Dataverse.add_study() is called on this study
+        self.last_receipt = None
 
-        # deposit receipt is added when Dataverse.add_study() is called on this study
-        self.lastDepositReceipt = None
+        self.entry = entry
+        self.dataverse = dataverse
+        # TODO: Add self.exists_on_dataverse / self.created
+        self.edit_uri = edit_uri
+        self.edit_media_uri = edit_media_uri
+        self.statement_uri = statement_uri
 
-        # sets fields from kwargs
-        self.editUri = kwargs.pop('editUri') if 'editUri' in kwargs.keys() else None
-        self.editMediaUri = kwargs.pop('editMediaUri') if 'editMediaUri' in kwargs.keys() else None
-        self.statementUri = kwargs.pop('statementUri') if 'statementUri' in kwargs.keys() else None
-
-        # todo: add self.exists_on_dataverse / self.created
-        self.hostDataverse = kwargs.pop('hostDataverse') if 'hostDataverse' in kwargs.keys() else None
-
-        # creates sword entry from xml
-        if args and not isinstance(args[0], dict):
-            with open(args[0]) as f:
-                xml = f.read()
-            self.entry = sword2.Entry(xml)
-
-        # creates sword entry from keyword arguments
-        if kwargs:
-            if 'title' not in kwargs.keys() or isinstance(kwargs.get('title'), list):
+        # Create entry if none exists
+        if not self.entry:
+            if isinstance(title, basestring):
+                self.entry = sword2.Entry()
+                self.entry.add_field(format_term('title'), title)
+            else:
                 raise Exception('Study needs a single, valid title.')
 
-            self.entry = sword2.Entry()
-
+        # Updates sword entry from keyword arguments
+        if kwargs:
             for k in kwargs.keys():
                 if isinstance(kwargs[k], list):
                     for item in kwargs[k]:
@@ -66,61 +61,61 @@ class Study(object):
         
         entry=
 {eo}
-/STUDY ========= """.format(so=studyObject,eo=entryObject)
+/STUDY ========= """.format(so=studyObject, eo=entryObject)
 
     @classmethod
-    def from_entry_element(cls, entry_element, hostDataverse=None):
-        id_element = get_elements(entry_element,
-                                  tag="id",
-                                  numberOfElements=1)
+    def from_xml_file(cls, xml_file):
+        with open(xml_file) as f:
+            xml = f.read()
+        return cls(sword2.Entry(xml))
+
+    @classmethod
+    def from_entry(cls, entry_element, dataverse=None):
+        id_element = get_element(entry_element, tag="id")
                                     
-        title_element = get_elements(entry_element,
-                                     tag="title",
-                                     numberOfElements=1)
+        title_element = get_element(entry_element, tag="title")
                                             
-        edit_media_link_element = get_elements(entry_element,
-                                               tag="link",
-                                               attribute="rel",
-                                               attributeValue="edit-media",
-                                               numberOfElements=1)
+        edit_media_link_element = get_element(
+            entry_element,
+            tag="link",
+            attribute="rel",
+            attributeValue="edit-media",
+        )
 
         edit_media_link = edit_media_link_element.get("href") if edit_media_link_element is not None else None
 
         return cls(title=title_element.text,
                    id=id_element.text,
-                   editUri=entry_element.base,   # edit iri
-                   editMediaUri=edit_media_link,
-                   hostDataverse=hostDataverse)  # edit-media iri
+                   edit_uri=entry_element.base,   # edit iri
+                   edit_media_uri=edit_media_link,
+                   dataverse=dataverse)  # edit-media iri
 
     @property
     def doi(self):
-        urlPieces = self.editMediaUri.rsplit("/")
-        return '/'.join([urlPieces[-3], urlPieces[-2], urlPieces[-1]])
+        url_pieces = self.edit_media_uri.rsplit("/")
+        return '/'.join([url_pieces[-3], url_pieces[-2], url_pieces[-1]])
 
     @property
     def title(self):
-        dirty_title = get_elements(
-            self.get_statement(), tag='title', numberOfElements=1
-        ).text
+        dirty_title = get_element(self.get_statement(), tag='title').text
         return sanitize(dirty_title)
 
     def get_statement(self):
-        if not self.statementUri:
-            atomXml = self.get_entry()
-            statementLink = get_elements(
-                atomXml,
+        if not self.statement_uri:
+            entry = self.get_entry()
+            link = get_element(
+                entry,
                 tag="link",
                 attribute="rel",
                 attributeValue="http://purl.org/net/sword/terms/statement",
-                numberOfElements=1,
             )
-            self.statementUri = statementLink.get("href")
+            self.statement_uri = link.get("href")
         
-        studyStatement = self.hostDataverse.connection.swordConnection.get_resource(self.statementUri).content
-        return studyStatement
+        statement = self.dataverse.connection.swordConnection.get_resource(self.statement_uri).content
+        return statement
 
     def get_entry(self):
-        return self.hostDataverse.connection.swordConnection.get_resource(self.editUri).content
+        return self.dataverse.connection.swordConnection.get_resource(self.edit_uri).content
 
     def get_file(self, file_name, released=False):
 
@@ -138,26 +133,26 @@ class Study(object):
         if released:
             return self.get_released_files()
 
-        if not self.statementUri:
-            atomXml = self.get_entry()
-            statementLink = get_elements(atomXml,
-                                         tag="link",
-                                         attribute="rel",
-                                         attributeValue="http://purl.org/net/sword/terms/statement",
-                                         numberOfElements=1)
-            self.statementUri = statementLink.get("href")
+        if not self.statement_uri:
+            entry = self.get_entry()
+            link = get_element(
+                entry,
+                tag="link",
+                attribute="rel",
+                attributeValue="http://purl.org/net/sword/terms/statement",
+            )
+            self.statement_uri = link.get("href")
 
-        atomStatement = self.hostDataverse.connection.swordConnection.get_atom_sword_statement(self.statementUri)
-
-        return [DvnFile.CreateFromAtomStatementObject(res, self) for res in atomStatement.resources]
+        statement = self.dataverse.connection.swordConnection.get_atom_sword_statement(self.statement_uri)
+        return [DvnFile.CreateFromAtomStatementObject(res, self) for res in statement.resources]
 
     def get_released_files(self):
-        '''
+        """
         Uses data sharing API to retrieve a list of files from the most
         recently released version of the study
-        '''
+        """
         download_url = 'https://{0}/dvn/api/metadata/{1}'.format(
-            self.hostDataverse.connection.host, self.doi
+            self.dataverse.connection.host, self.doi
         )
         xml = requests.get(download_url, verify=False).content
         elements = get_elements(xml, tag='otherMat')
@@ -182,6 +177,10 @@ class Study(object):
             filepaths = self._open_directory(filepaths[0])
 
         # Todo: Handle file versions
+
+        # Zip up files
+        s = StringIO.StringIO()
+        zip_file = ZipFile(s, 'w')
         for filepath in filepaths:
             filename = os.path.basename(filepath)
             if os.path.getsize(filepath) < 5:
@@ -189,32 +188,19 @@ class Study(object):
                                    '{} cannot be uploaded.'.format(filename))
             elif filename in [f.name for f in self.get_files()]:
                 raise DvnException('The file {} already exists on the DataVerse'.format(filename))
+            zip_file.write(filepath)
 
-        print "Uploading files: ", filepaths
-        
-        deleteAfterUpload = False
+        zip_file.close()
+        content = s.getvalue()
 
-        # if we have more than one file, or one file that is not a zip, we need to zip it
-        if len(filepaths) != 1 or mimetypes.guess_type(filepaths[0])[0] != "application/zip":
-            filepath = self._zip_files(filepaths)
-            deleteAfterUpload = True
-        else:
-            filepath = filepaths[0]
+        self.upload_file('temp.zip', content, zip=False)
 
-        filename = os.path.basename(filepath)
-
-        with open(filepath, "rb") as content:
-            self.add_file_obj(filename, content, zip=False)
-
-        if deleteAfterUpload:
-            os.remove(filepath)
-
-    def add_file_obj(self, filename, content, zip=True):
+    def upload_file(self, filename, content, zip=True):
         if zip:
             s = StringIO.StringIO()
-            zipFile = ZipFile(s, 'w')
-            zipFile.writestr(filename, content)
-            zipFile.close()
+            zip_file = ZipFile(s, 'w')
+            zip_file.writestr(filename, content)
+            zip_file.close()
             content = s.getvalue()
 
         headers = {
@@ -223,9 +209,9 @@ class Study(object):
             'Packaging': 'http://purl.org/net/sword/package/SimpleZip',
         }
 
-        requests.post(self.editMediaUri, data=content, headers=headers,
-                      auth=(self.hostDataverse.connection.username,
-                            self.hostDataverse.connection.password))
+        requests.post(self.edit_media_uri, data=content, headers=headers,
+                      auth=(self.dataverse.connection.username,
+                            self.dataverse.connection.password))
 
         self._refresh()
 
@@ -242,14 +228,14 @@ class Study(object):
     #     self._refresh(deposit_receipt=depositReceipt)
     
     def release(self):
-        depositReceipt = self.hostDataverse.connection.swordConnection.complete_deposit(
-            dr=self.lastDepositReceipt,
-            se_iri=self.editUri,
+        receipt = self.dataverse.connection.swordConnection.complete_deposit(
+            dr=self.last_receipt,
+            se_iri=self.edit_uri,
         )
-        self._refresh(deposit_receipt=depositReceipt)
+        self._refresh(deposit_receipt=receipt)
     
     def delete_file(self, dvnFile):
-        depositReceipt = self.hostDataverse.connection.swordConnection.delete_file(
+        receipt = self.dataverse.connection.swordConnection.delete_file(
             dvnFile.editMediaUri
         )
         # Dataverse does not give a desposit receipt at this time
@@ -260,27 +246,19 @@ class Study(object):
             self.delete_file(f)
         
     def get_citation(self):
-        return get_elements(self.get_entry(), namespace="http://purl.org/dc/terms/", tag="bibliographicCitation",
-                            numberOfElements=1).text
+        return get_element(
+            self.get_entry(),
+            namespace='dcterms',
+            tag="bibliographicCitation"
+        ).text
     
     def get_state(self):
-        return get_elements(self.get_statement(), tag="category", attribute="term",
-                            attributeValue="latestVersionState", numberOfElements=1).text
-    
-    def get_id(self):
-        urlPieces = self.editMediaUri.rsplit("/")
-        return '/'.join([urlPieces[-2], urlPieces[-1]])
-
-    def _zip_files(self, filesToZip, pathToStoreZip=None):
-        zipFilePath = os.path.join(os.getenv("TEMP", "/tmp"),  "temp_dvn_upload.zip") \
-            if not pathToStoreZip else pathToStoreZip
-        
-        zipFile = ZipFile(zipFilePath, 'w')
-        for fileToZip in filesToZip:
-            zipFile.write(fileToZip)
-        zipFile.close()
-            
-        return zipFilePath
+        return get_element(
+            self.get_statement(),
+            tag="category",
+            attribute="term",
+            attributeValue="latestVersionState"
+        ).text
 
     def _open_directory(self, path):
         path = os.path.normpath(path) + os.sep
@@ -297,8 +275,8 @@ class Study(object):
     def _refresh(self, deposit_receipt=None):
         # todo is it possible for the deposit receipt to have different info than the study?
         if deposit_receipt:
-            self.editUri = deposit_receipt.edit
-            self.editMediaUri = deposit_receipt.edit_media
-            self.statementUri = deposit_receipt.atom_statement_iri
-            self.lastDepositReceipt = deposit_receipt
+            self.edit_uri = deposit_receipt.edit
+            self.edit_media_uri = deposit_receipt.edit_media
+            self.statement_uri = deposit_receipt.atom_statement_iri
+            self.last_receipt = deposit_receipt
         self.entry = sword2.Entry(atomEntryXml=self.get_entry())

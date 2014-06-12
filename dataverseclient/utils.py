@@ -13,24 +13,27 @@ class DvnException(Exception):
 
 
 # factor out xpath operations so we don't have to look at its ugliness
+def get_element(rootElement, tag=None, namespace=None, attribute=None, attributeValue=None):
+    return get_elements(rootElement, tag, namespace, attribute, attributeValue, numberOfElements=1)
+
 def get_elements(rootElement, tag=None, namespace=None, attribute=None, attributeValue=None, numberOfElements=None):
     # accept either an lxml.Element or a string of xml
     # if a string, convert to etree element
     if isinstance(rootElement, str):
         rootElement = etree.XML(rootElement)
-    
-    if namespace == None:
-        namespace = rootElement.nsmap[None]
-    #namespace = 'http://www.w3.org/1999/xhtml'
+
+    try:
+        namespace = rootElement.nsmap[namespace]
+    except KeyError:
+        # namespace not expressed in map; use literal
+        pass
 
     if not tag:
         xpath = "*"
-    elif namespace == "":
+    elif namespace is None:
         xpath = tag
     else:
-        xpath = "{{{ns}}}{tg}".format(ns=namespace, tg=tag)
-
-    #print xpath
+        xpath = "{{{ns}}}{tag}".format(ns=namespace, tag=tag)
 
     if attribute and not attributeValue:
         xpath += "[@{att}]".format(att=attribute)
@@ -40,30 +43,30 @@ def get_elements(rootElement, tag=None, namespace=None, attribute=None, attribut
         xpath += "[@{att}='{attVal}']".format(att=attribute, attVal=attributeValue)
     
     elements = None
-    try:
-        elements = rootElement.findall(xpath)
+    # try:
+    elements = rootElement.findall(xpath)
+
+    if numberOfElements and len(elements) != numberOfElements:
+        raise Exception("Wrong number of elements found. Expected {0} and found {1}.".format(
+            numberOfElements,
+            len(elements),
+        ))
         
-        if numberOfElements and len(elements) != numberOfElements:
-            raise Exception("Wrong number of elements found. Expected {0} and found {1}.".format(
-                numberOfElements,
-                len(elements),
-            ))
-        
-    except Exception as e:
-        print """
-Exception thrown trying to get_elements with the following parameters:
-exp='{e}'
-xpath='{xp}'
-xml=
-{xml}""".format(e=e, xp=xpath, xml=etree.tostring(rootElement, pretty_print=True))
+#     except Exception as e:
+#         print """
+# Exception thrown trying to get_elements with the following parameters:
+# exp='{e}'
+# xpath='{xp}'
+# xml=
+# {xml}""".format(e=e, xp=xpath, xml=etree.tostring(rootElement, pretty_print=True))
     
-    retVal = elements
+    rv = elements
     if len(elements) == 1 and numberOfElements == 1:
-        retVal = elements[0]
+        rv = elements[0]
     elif len(elements) == 0 and numberOfElements:
-        retVal = None
+        rv = None
     
-    return retVal
+    return rv
 
 
 def format_term(term):
