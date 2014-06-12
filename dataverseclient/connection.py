@@ -67,4 +67,4 @@ class DvnConnection(object):
 
     def get_dataverse(self, alias):
         return next((dataverse for dataverse in self.get_dataverses()
-             if dataverse.alias == alias), None)
+                     if dataverse.alias == alias), None)

@@ -18,10 +18,11 @@ import traceback
 # downloaded modules
 
 # local modules
-from dvn_client.src.study import Study
-from dvn_client.src.connection import DvnConnection
-from config import DEFAULT_PASSWORD, DEFAULT_HOST, DEFAULT_CERT, DEFAULT_USERNAME, EXAMPLE_FILE, \
+from dataverseclient.study import Study
+from dataverseclient.connection import DvnConnection
+from config import DEFAULT_PASSWORD, DEFAULT_HOST, DEFAULT_CERT, DEFAULT_USERNAME, \
     EXAMPLE_DICT
+
 
 def main():
     
@@ -30,7 +31,7 @@ def main():
         dvc = DvnConnection(username=DEFAULT_USERNAME,
                         password=DEFAULT_PASSWORD,
                         host=DEFAULT_HOST, 
-                        cert=DEFAULT_CERT)
+                        disable_ssl_certificate_validation=True)
                         
         
         dvs = dvc.get_dataverses()
@@ -53,10 +54,10 @@ def main():
         print s.get_id()
 
         # s.delete_all_files()
-        # s.add_file("dvn_client/resources/test/one.txt")
+        # s.add_file("dataverseclient/resources/test/one.txt")
         # s.delete_file(s.get_file("one.txt"))
 
-        # s.add_file("dvn_client/resources/test")
+        # s.add_file("dataverseclient/resources/test")
 
         s.get_statement()
         print s.get_entry()
@@ -80,7 +81,7 @@ def main():
 
         # s.hostDataverse.delete_study(s)
 
-        print "\n\ndvn_client succeeded"
+        print "\n\nclient succeeded"
         
     except Exception as e:
         sleep(1)

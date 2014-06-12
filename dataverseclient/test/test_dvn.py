@@ -6,10 +6,10 @@ import logging
 logging.basicConfig(level=logging.ERROR)
 
 # local modules
-from dvn_client.src.study import Study
-from dvn_client.src.connection import DvnConnection
-from dvn_client.src.example.config import DEFAULT_USERNAME, DEFAULT_HOST, DEFAULT_PASSWORD
-from dvn_client.src.test.tests import PICS_OF_CATS_STUDY, ATOM_STUDY
+from dataverseclient.study import Study
+from dataverseclient.connection import DvnConnection
+from dataverseclient.example.config import DEFAULT_USERNAME, DEFAULT_HOST, DEFAULT_PASSWORD
+from dataverseclient.test.config import PICS_OF_CATS_STUDY, ATOM_STUDY
 
 
 class TestStudyOperations(unittest.TestCase):

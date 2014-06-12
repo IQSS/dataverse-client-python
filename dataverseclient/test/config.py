@@ -5,8 +5,8 @@ PICS_OF_CATS_STUDY = {
     "abstract" : "In this study we prove that there can be pictures of cats passed through the intertubes.",
 }
 
-INGEST_FILES = "../../resources/sword_ingest.zip"
+INGEST_FILES = "../resources/sword_ingest.zip"
 
-ATOM_STUDY = "../../resources/atom-entry-study.xml"
-ATOM_STUDY_2 = "../../resources/atom-entry-study2.xml"
+ATOM_STUDY = "../resources/atom-entry-study.xml"
+ATOM_STUDY_2 = "../resources/atom-entry-study2.xml"
 
