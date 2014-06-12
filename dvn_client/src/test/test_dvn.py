@@ -1,11 +1,3 @@
-# To change this template, choose Tools | Templates
-# and open the template in the editor.
-
-__author__="peterbull"
-__date__ ="$Aug 21, 2013 2:56:25 PM$"
-
-from operator import eq
-import os
 import sys
 from time import sleep
 import unittest
@@ -13,43 +5,41 @@ import unittest
 import logging
 logging.basicConfig(level=logging.ERROR)
 
-#local modules
+# local modules
 from dvn_client.src.study import Study
 from dvn_client.src.connection import DvnConnection
-from dvn_client.src.example.config import DEFAULT_USERNAME, DEFAULT_CERT, DEFAULT_HOST, DEFAULT_PASSWORD
-from dvn_client.src.test.tests import PIC_OF_CAT, PICS_OF_CATS_STUDY, INGEST_FILES, ATOM_STUDY
-    
+from dvn_client.src.example.config import DEFAULT_USERNAME, DEFAULT_HOST, DEFAULT_PASSWORD
+from dvn_client.src.test.tests import PICS_OF_CATS_STUDY, ATOM_STUDY
+
+
 class TestStudyOperations(unittest.TestCase):
     @classmethod
     def setUpClass(self):
-        # LOAD TEST DATA
-        
-        print "Loading test data."
-        testModulePath = os.path.dirname(__file__)
-        execfile(os.path.join(testModulePath, "../example/config.py"), globals())    #CREDS - This file is not committed.
-        execfile(os.path.join(testModulePath, "tests.py"), globals())     #TEST DATA
         
         print "Connecting to DVN."
         self.dvc = DvnConnection(username=DEFAULT_USERNAME,
-                        password=DEFAULT_PASSWORD, 
+                        password=DEFAULT_PASSWORD,
                         host=DEFAULT_HOST, 
-                        cert=DEFAULT_CERT)
+                        disable_ssl_certificate_validation=True)
                         
         print "Getting Dataverse"
         self.dv = self.dvc.get_dataverses()[0]
         
         print "Removing any existing studies."
-        self.dv.delete_all_studies(ignoreExceptions=True)
+        studies = self.dv.get_studies()
+        for study in studies :
+            if study.get_state() != 'DEACCESSIONED':
+                self.dv.delete_study(study)
         
     def setUp(self):
         #runs before each test method
         
         #create a study for each test
-        s = Study.from_dict(PICS_OF_CATS_STUDY)
+        s = Study(PICS_OF_CATS_STUDY)
         self.dv.add_study(s)
-        id = s.get_id()
-        self.s = self.dv.get_study_by_hdl(id)
-        self.assertEqual(id, self.s.get_id())
+        doi = s.doi
+        self.s = self.dv.get_study_by_doi(doi)
+        self.assertEqual(doi, self.s.doi)
         return
     
     def tearDown(self):
@@ -59,25 +49,20 @@ class TestStudyOperations(unittest.TestCase):
             return
     
     def test_create_study_from_xml(self):
-        xmlStudy = Study.from_atom_xml_file(ATOM_STUDY)
+        xmlStudy = Study(ATOM_STUDY)
         self.dv.add_study(xmlStudy)
-        atomStudy = self.dv.get_study_by_string_in_entry("The first study for the New England Journal of Coffee dataverse")
+        atomStudy = self.dv.get_study_by_title("Roasting at Home")
         self.assertTrue(atomStudy)
         self.dv.delete_study(atomStudy)
         
-    def test_add_files_to_study(self):
-        expected_files = ["char_r.tab",
-                          "float_new_r.tab",
-                          "int_r.tab",
-                          "min_date_r.tab"]
-        self.s.add_files([INGEST_FILES])
+    def test_add_file_obj(self):
+        self.s.add_file_obj('file.txt', 'This is a simple text file!')
+        self.s.add_file_obj('file2.txt', 'This is the second simple text file!')
         sleep(3) #wait for ingest
         actual_files = [f.name for f in self.s.get_files()]
         
-        expected_files.sort()
-        actual_files.sort()
-        
-        self.assertEqual(expected_files, actual_files)
+        self.assertIn('file.txt', actual_files)
+        self.assertIn('file2.txt', actual_files)
         
     def test_display_atom_entry(self):
         # this just tests we can get an entry back, but does
@@ -92,23 +77,23 @@ class TestStudyOperations(unittest.TestCase):
         self.assertTrue(self.s.get_statement())
     
     def test_delete_a_file(self):
-        self.s.add_file(PIC_OF_CAT)
+        self.s.add_file_obj('cat.jpg', b'Whatever a cat looks like goes here.')
         
         #add file and confirm
         files = self.s.get_files()
-        catFile = [f for f in files if f.name == "cat.jpg"]
-        self.assertTrue(len(catFile) == 1)
+        cat_file = [f for f in files if f.name == 'cat.jpg']
+        self.assertTrue(len(cat_file) == 1)
         
         #delete file and confirm
-        self.s.delete_file(catFile[0])
+        self.s.delete_file(cat_file[0])
         files = self.s.get_files()
-        catFile = [f for f in files if f.name == "cat.jpg"]
-        self.assertTrue(len(catFile) == 0)
+        cat_file = [f for f in files if f.name == "cat.jpg"]
+        self.assertTrue(len(cat_file) == 0)
         
     def test_delete_a_study(self):
-        xmlStudy = Study.from_atom_xml_file(ATOM_STUDY)
+        xmlStudy = Study(ATOM_STUDY)
         self.dv.add_study(xmlStudy)
-        atomStudy = self.dv.get_study_by_string_in_entry("The first study for the New England Journal of Coffee dataverse")
+        atomStudy = self.dv.get_study_by_title("Roasting at Home")
         self.assertTrue(atomStudy)
 
         startingNumberOfStudies = len(self.dv.get_studies())
@@ -124,7 +109,7 @@ class TestStudyOperations(unittest.TestCase):
         self.assertTrue(self.s.get_state() == "DEACCESSIONED")
     
     def test_dataverse_released(self):
-        self.assertTrue(self.dv.is_released())
+        self.assertTrue(self.dv.is_released)
     
 if __name__ == "__main__":
     __file__ = sys.argv[0]

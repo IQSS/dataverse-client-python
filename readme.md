@@ -47,7 +47,7 @@ DEFAULT_CERT = "dvn_client/resources/dvn-4.hmdc.harvard.edu" #see below for info
 
 ## Installation Test
 
-* Navigate to `dvn-client-python/dvn-client/src/`
+* Navigate to `dvn-client-python/dvn-client/src/test/`
 * Edit test data in `tests.py` as appropriate
 * Run the client `python dvn_client.py`
 * To run all of the tests, run `python test_dvn.py` (for more options see [unittest](http://docs.python.org/2/library/unittest.html#assert-methods))

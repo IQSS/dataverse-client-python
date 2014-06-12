@@ -83,10 +83,10 @@ class Dataverse(object):
         ]
 
     def get_study_by_title(self, title):
-        return next((s for s in self.get_studies if s.title == title), None)
+        return next((s for s in self.get_studies() if s.title == title), None)
 
     def get_study_by_doi(self, doi):
-        return next((s for s in self.get_studies if s.doi == doi), None)
+        return next((s for s in self.get_studies() if s.doi == doi), None)
 
     # todo: rename to global_id
     def get_study_by_hdl(self, hdl):
