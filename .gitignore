@@ -3,5 +3,5 @@
 *pyc
 .idea/
 .cache/
-dvn_client/resources/test
+*/local.py
 *~
