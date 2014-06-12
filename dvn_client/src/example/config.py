@@ -21,3 +21,9 @@ EXAMPLE_DICT = {
 }
 
 EXAMPLE_FILE = "dvn_client/resources/atom-example.xml"
+
+
+try:
+    from local import *
+except ImportError:
+    pass

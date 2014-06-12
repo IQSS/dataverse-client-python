@@ -19,7 +19,7 @@ from dataverse import Dataverse
 
 class DvnConnection(object):
     # todo add port number
-    def __init__(self, username, password, host, cert=None, sdUriOverride=None):
+    def __init__(self, username, password, host, cert=None, sdUriOverride=None, disable_ssl_certificate_validation=False):
         # Connection Properties
         self.username = username
         self.password = password
@@ -27,9 +27,11 @@ class DvnConnection(object):
         self.sdUri = "https://{host}/dvn/api/data-deposit/v1/swordv2/service-document".format(host=self.host) \
             if not sdUriOverride else sdUriOverride.format(host=self.host)
         self.cert = cert
+        self.disable_ssl_certificate_validation = disable_ssl_certificate_validation
         
         # Connection Status and SWORD Properties
         self.swordConnection = None
+        self.status = None
         self.connected = False
         self.serviceDocument = None
         
@@ -46,10 +48,12 @@ class DvnConnection(object):
             user_name=self.username,
             user_pass=self.password,
             ca_certs=self.cert,
+            disable_ssl_certificate_validation=self.disable_ssl_certificate_validation,
         )
 
         self.serviceDocument = self.swordConnection.get_service_document()
-        self.connected = True if hasattr(self.swordConnection, 'workspaces') else False
+        self.status = self.swordConnection.history[1]['payload']['response']['status']
+        self.connected = True if self.status == 200 else False
         
     def get_dataverses(self):
         # TODO peterbull: Do we need to call the API again to make sure
@@ -60,3 +64,7 @@ class DvnConnection(object):
 
         # Cast SWORD collections to Dataverses
         return [Dataverse(self, col) for col in collections]
+
+    def get_dataverse(self, alias):
+        return next((dataverse for dataverse in self.get_dataverses()
+             if dataverse.alias == alias), None)

@@ -11,7 +11,6 @@ import logging
 logging.basicConfig(level=logging.ERROR)
 
 # python base lib modules
-import argparse
 import json
 from time import sleep
 import traceback
@@ -24,31 +23,12 @@ from dvn_client.src.connection import DvnConnection
 from config import DEFAULT_PASSWORD, DEFAULT_HOST, DEFAULT_CERT, DEFAULT_USERNAME, EXAMPLE_FILE, \
     EXAMPLE_DICT
 
-def parse_arguments():
-    parser = argparse.ArgumentParser(description='dvn_client exercises the APIs available for a DataVerse Network')
-    
-    # TODO peterbull: add arguments 
-    # For manual connection2
-#    parser.add_argument('action', choices=['create','upload'], default=None, help='Description for foo argument')
-#    parser.add_argument('-u','--username', default=None, help='Description for foo argument')
-#    parser.add_argument('-p','--password', default=None, help='Description for bar argument')
-    
-    parser.add_argument('--runTests', action="store", help='Path to a file with test definitions.')
-    parser.add_argument('--config', action="store", help="Path to a file that contains configuration information.")
-    return parser.parse_args()
-
 def main():
-    # Get the command line arguments.
-    args = parse_arguments()
-    
-    if args.runTests and args.config:
-        execfile(args.config, globals())
-        execfile(args.runTests, globals())
     
     dv = None # declare outside so except clause has access
     try:
         dvc = DvnConnection(username=DEFAULT_USERNAME,
-                        password=DEFAULT_PASSWORD, 
+                        password=DEFAULT_PASSWORD,
                         host=DEFAULT_HOST, 
                         cert=DEFAULT_CERT)
                         
@@ -73,12 +53,13 @@ def main():
         print s.get_id()
 
         # s.delete_all_files()
-        # f = s.get_files()[0]
-        s.add_file("dvn_client/resources/test/one.txt")
+        # s.add_file("dvn_client/resources/test/one.txt")
+        # s.delete_file(s.get_file("one.txt"))
 
         # s.add_file("dvn_client/resources/test")
 
-        # print s.get_entry()
+        s.get_statement()
+        print s.get_entry()
 
         # s.add_files([INGEST_FILES])
         # print s.get_citation()
