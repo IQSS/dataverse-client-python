@@ -46,6 +46,17 @@ class TestUtils(unittest.TestCase):
         nonsense = utils.get_elements(entry, 'nonsense', 'booga')
         self.assertEqual(nonsense, [])
 
+    def test_format_term(self):
+        # A term not in the replacement dict
+        term = 'title'
+        formatted_term = utils.format_term(term)
+        self.assertEqual(formatted_term, 'dcterms_title')
+
+    def test_format_term_replace(self):
+        # A term in the replacement dict
+        term = 'id'
+        formatted_term = utils.format_term(term)
+        self.assertEqual(formatted_term, 'dcterms_identifier')
 
 
 class TestStudy(unittest.TestCase):

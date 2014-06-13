@@ -9,7 +9,7 @@ import sword2
 import requests
 
 # local modules
-from file import DvnFile, ReleasedFile
+from file import DraftFile, ReleasedFile
 from utils import format_term, get_element, get_elements, DataverseException, sanitize
 
 
@@ -86,14 +86,30 @@ class Study(object):
                    dataverse=dataverse)  # edit-media iri
 
     @property
+    def title(self):
+        dirty_title = get_element(self.get_statement(), tag='title').text
+        return sanitize(dirty_title)
+
+    @property
     def doi(self):
         url_pieces = self.edit_media_uri.rsplit("/")
         return '/'.join([url_pieces[-3], url_pieces[-2], url_pieces[-1]])
 
     @property
-    def title(self):
-        dirty_title = get_element(self.get_statement(), tag='title').text
-        return sanitize(dirty_title)
+    def citation(self):
+        return get_element(
+            self.get_entry(),
+            namespace='dcterms',
+            tag="bibliographicCitation"
+        ).text
+
+    def get_state(self):
+        return get_element(
+            self.get_statement(),
+            tag="category",
+            attribute="term",
+            attribute_value="latestVersionState"
+        ).text
 
     def get_statement(self):
         if not self.statement_uri:
@@ -139,25 +155,25 @@ class Study(object):
             self.statement_uri = link.get("href")
 
         statement = self.dataverse.connection.swordConnection.get_atom_sword_statement(self.statement_uri)
-        return [DvnFile.CreateFromAtomStatementObject(res, self) for res in statement.resources]
+        return [DraftFile.from_statement(res, self) for res in statement.resources]
 
     def get_released_files(self):
         """
         Uses data sharing API to retrieve a list of files from the most
         recently released version of the study
         """
-        download_url = 'https://{0}/dvn/api/metadata/{1}'.format(
+        metadata_url = 'https://{0}/dvn/api/metadata/{1}'.format(
             self.dataverse.connection.host, self.doi
         )
-        xml = requests.get(download_url, verify=False).content
+        xml = requests.get(metadata_url, verify=False).content
         elements = get_elements(xml, tag='otherMat')
 
         files = []
         for element in elements:
             f = ReleasedFile(
                 name=element[0].text,
-                uri=element.attrib.get('URI'),
-                hostStudy=self,
+                download_url=element.attrib.get('URI'),
+                study=self,
             )
             files.append(f)
 
@@ -184,7 +200,6 @@ class Study(object):
             elif filename in [f.name for f in self.get_files()]:
                 raise DataverseException('The file {} already exists on the DataVerse'.format(filename))
             zip_file.write(filepath)
-
         zip_file.close()
         content = s.getvalue()
 
@@ -204,9 +219,14 @@ class Study(object):
             'Packaging': 'http://purl.org/net/sword/package/SimpleZip',
         }
 
-        requests.post(self.edit_media_uri, data=content, headers=headers,
-                      auth=(self.dataverse.connection.username,
-                            self.dataverse.connection.password))
+        requests.post(
+            self.edit_media_uri,
+            data=content,
+            headers=headers,
+            verify=False,
+            auth=(self.dataverse.connection.username,
+                  self.dataverse.connection.password),
+        )
 
         self._refresh()
 
@@ -231,7 +251,7 @@ class Study(object):
     
     def delete_file(self, dvnFile):
         receipt = self.dataverse.connection.swordConnection.delete_file(
-            dvnFile.editMediaUri
+            dvnFile.edit_media_uri
         )
         # Dataverse does not give a desposit receipt at this time
         self._refresh(deposit_receipt=None)
@@ -239,21 +259,7 @@ class Study(object):
     def delete_all_files(self):
         for f in self.get_files():
             self.delete_file(f)
-        
-    def get_citation(self):
-        return get_element(
-            self.get_entry(),
-            namespace='dcterms',
-            tag="bibliographicCitation"
-        ).text
-    
-    def get_state(self):
-        return get_element(
-            self.get_statement(),
-            tag="category",
-            attribute="term",
-            attribute_value="latestVersionState"
-        ).text
+
 
     def _open_directory(self, path):
         path = os.path.normpath(path) + os.sep
@@ -274,4 +280,4 @@ class Study(object):
             self.edit_media_uri = deposit_receipt.edit_media
             self.statement_uri = deposit_receipt.atom_statement_iri
             self.last_receipt = deposit_receipt
-        self.entry = sword2.Entry(atomEntryXml=self.get_entry())
+        self.entry = self.get_entry()
