@@ -17,7 +17,7 @@ import requests
 
 # local modules
 from file import DvnFile, ReleasedFile
-from utils import format_term, get_element, get_elements, DvnException, sanitize
+from utils import format_term, get_element, get_elements, DataverseException, sanitize
 
 
 class Study(object):
@@ -28,33 +28,35 @@ class Study(object):
         # Deposit receipt is added when Dataverse.add_study() is called on this study
         self.last_receipt = None
 
-        self.entry = entry
         self.dataverse = dataverse
         # TODO: Add self.exists_on_dataverse / self.created
         self.edit_uri = edit_uri
         self.edit_media_uri = edit_media_uri
         self.statement_uri = statement_uri
 
-        # Create entry if none exists
-        if not self.entry:
+        sword_entry = sword2.Entry(entry)
+
+        # Append title to entry
+        if not get_elements(sword_entry.pretty_print(), namespace='dcterms', tag='title'):
             if isinstance(title, basestring):
-                self.entry = sword2.Entry()
-                self.entry.add_field(format_term('title'), title)
+                sword_entry.add_field(format_term('title'), title)
             else:
-                raise Exception('Study needs a single, valid title.')
+                raise DataverseException('Study needs a single, valid title.')
 
         # Updates sword entry from keyword arguments
         if kwargs:
             for k in kwargs.keys():
                 if isinstance(kwargs[k], list):
                     for item in kwargs[k]:
-                        self.entry.add_field(format_term(k), item)
+                        sword_entry.add_field(format_term(k), item)
                 else:
-                    self.entry.add_field(format_term(k), kwargs[k])
+                    sword_entry.add_field(format_term(k), kwargs[k])
+
+        self.entry = sword_entry.pretty_print()
 
     def __repr__(self):
         studyObject = pprint.pformat(self.__dict__)
-        entryObject = self.entry.pretty_print()
+        entryObject = self.entry
         return """STUDY ========= "
         study=
 {so}
@@ -67,7 +69,7 @@ class Study(object):
     def from_xml_file(cls, xml_file):
         with open(xml_file) as f:
             xml = f.read()
-        return cls(sword2.Entry(xml))
+            return cls(xml)
 
     @classmethod
     def from_entry(cls, entry_element, dataverse=None):
@@ -184,10 +186,10 @@ class Study(object):
         for filepath in filepaths:
             filename = os.path.basename(filepath)
             if os.path.getsize(filepath) < 5:
-                raise DvnException('The DataVerse does not currently accept files less than 5 bytes. '
+                raise DataverseException('The DataVerse does not currently accept files less than 5 bytes. '
                                    '{} cannot be uploaded.'.format(filename))
             elif filename in [f.name for f in self.get_files()]:
-                raise DvnException('The file {} already exists on the DataVerse'.format(filename))
+                raise DataverseException('The file {} already exists on the DataVerse'.format(filename))
             zip_file.write(filepath)
 
         zip_file.close()

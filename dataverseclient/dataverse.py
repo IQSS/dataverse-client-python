@@ -15,9 +15,6 @@ class Dataverse(object):
     def __init__(self, connection, collection):
         self.connection = connection
         self.collection = collection
-        
-    def __repr__(self):
-        return '<Dataverse Object: {0} ({1})>'.format(self.title, self.alias)
 
     # Note: is_released is a Dataverse concept--not from SWORD
     @property
@@ -82,7 +79,4 @@ class Dataverse(object):
         return next((s for s in self.get_studies() if s.title == title), None)
 
     def get_study_by_string_in_entry(self, string):
-        return next(
-            (s for s in self.get_studies() if string in s.entry.pretty_print()),
-            None
-        )
+        return next((s for s in self.get_studies() if string in s.entry), None)

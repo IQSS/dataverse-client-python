@@ -8,7 +8,7 @@ REPLACEMENT_DICT = {'id': 'identifier', 'author': 'creator', 'producer': 'publis
                     'keyword': 'subject', 'publication': 'isReferencedBy'}
 
 
-class DvnException(Exception):
+class DataverseException(Exception):
     pass
 
 

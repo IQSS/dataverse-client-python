@@ -13,22 +13,27 @@ from dataverseclient.test.config import PICS_OF_CATS_STUDY, ATOM_STUDY
 from dataverseclient import utils
 
 
+class TestUtils(unittest.TestCase):
+    pass
+
+
 class TestStudy(unittest.TestCase):
 
     def test_init(self):
         study = Study(title='My Study', publisher='Mr. Pub Lisher')
         title = utils.get_element(
-            study.entry.pretty_print(),
+            study.entry,
             namespace='dcterms',
             tag='title'
         ).text
         publisher = utils.get_element(
-            study.entry.pretty_print(),
+            study.entry,
             namespace='dcterms',
             tag='publisher'
         ).text
         self.assertEqual(title, 'My Study')
         self.assertEqual(publisher, 'Mr. Pub Lisher')
+
 
 class TestStudyOperations(unittest.TestCase):
     @classmethod
