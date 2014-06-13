@@ -1,11 +1,4 @@
-
-# To change this template, choose Tools | Templates
-# and open the template in the editor.
-__author__="peterbull"
-__date__ ="$Jul 30, 2013 12:21:28 PM$"
-
 # python base lib modules
-import mimetypes
 import os
 import pprint
 import StringIO
@@ -69,7 +62,7 @@ class Study(object):
     def from_xml_file(cls, xml_file):
         with open(xml_file) as f:
             xml = f.read()
-            return cls(xml)
+        return cls(xml)
 
     @classmethod
     def from_entry(cls, entry_element, dataverse=None):
@@ -81,7 +74,7 @@ class Study(object):
             entry_element,
             tag="link",
             attribute="rel",
-            attributeValue="edit-media",
+            attribute_value="edit-media",
         )
 
         edit_media_link = edit_media_link_element.get("href") if edit_media_link_element is not None else None
@@ -109,7 +102,7 @@ class Study(object):
                 entry,
                 tag="link",
                 attribute="rel",
-                attributeValue="http://purl.org/net/sword/terms/statement",
+                attribute_value="http://purl.org/net/sword/terms/statement",
             )
             self.statement_uri = link.get("href")
         
@@ -141,7 +134,7 @@ class Study(object):
                 entry,
                 tag="link",
                 attribute="rel",
-                attributeValue="http://purl.org/net/sword/terms/statement",
+                attribute_value="http://purl.org/net/sword/terms/statement",
             )
             self.statement_uri = link.get("href")
 
@@ -174,7 +167,7 @@ class Study(object):
         self.add_files([filepath])
 
     def add_files(self, filepaths):
-        # convert a directory to a list of files
+        # Convert a directory to a list of files
         if len(filepaths) == 1 and os.path.isdir(filepaths[0]):
             filepaths = self._open_directory(filepaths[0])
 
@@ -259,7 +252,7 @@ class Study(object):
             self.get_statement(),
             tag="category",
             attribute="term",
-            attributeValue="latestVersionState"
+            attribute_value="latestVersionState"
         ).text
 
     def _open_directory(self, path):

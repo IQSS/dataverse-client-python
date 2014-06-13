@@ -1,6 +1,3 @@
-__author__="peterbull"
-__date__ ="$Jul 30, 2013 12:32:24 PM$"
-
 # python base lib modules
 
 # downloaded modules
@@ -20,12 +17,11 @@ class Dataverse(object):
     @property
     def is_released(self):
         # Get entry resource for collection
-        collectionInfo = self.connection.swordConnection.get_resource(self.collection.href).content
-        status = utils.get_elements(
-            collectionInfo,
+        collection_info = self.connection.swordConnection.get_resource(self.collection.href).content
+        status = utils.get_element(
+            collection_info,
             namespace="http://purl.org/net/sword/terms/state",
             tag="dataverseHasBeenReleased",
-            numberOfElements=1,
         ).text
         return status.lower() == 'true'
 

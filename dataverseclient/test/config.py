@@ -8,5 +8,4 @@ PICS_OF_CATS_STUDY = {
 INGEST_FILES = "../resources/sword_ingest.zip"
 
 ATOM_STUDY = "../resources/atom-entry-study.xml"
-ATOM_STUDY_2 = "../resources/atom-entry-study2.xml"
 

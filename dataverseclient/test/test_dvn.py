@@ -5,6 +5,8 @@ import unittest
 import logging
 logging.basicConfig(level=logging.ERROR)
 
+import sword2
+
 # local modules
 from dataverseclient.study import Study
 from dataverseclient.connection import DvnConnection
@@ -14,7 +16,36 @@ from dataverseclient import utils
 
 
 class TestUtils(unittest.TestCase):
-    pass
+
+    def test_get_element(self):
+        with open(ATOM_STUDY) as f:
+            entry = f.read()
+        # One value
+        title = utils.get_element(entry, 'title', 'dcterms').text
+        self.assertEqual(title, 'Roasting at Home')
+        # Two values
+        creator = utils.get_element(entry, 'creator', 'dcterms').text
+        self.assertEqual(creator, 'Peets, John')
+        # No values
+        nonsense = utils.get_element(entry, 'nonsense', 'booga')
+        self.assertIsNone(nonsense)
+
+    def test_get_elements(self):
+        with open(ATOM_STUDY) as f:
+            entry = f.read()
+        # One value
+        titles = utils.get_elements(entry, 'title', 'dcterms')
+        self.assertEqual(len(titles), 1)
+        self.assertEqual(titles[0].text, 'Roasting at Home')
+        # Two values
+        creators = utils.get_elements(entry, 'creator', 'dcterms')
+        self.assertEqual(len(creators), 2)
+        self.assertEqual(creators[0].text, 'Peets, John')
+        self.assertEqual(creators[1].text, 'Stumptown, Jane')
+        # No values
+        nonsense = utils.get_elements(entry, 'nonsense', 'booga')
+        self.assertEqual(nonsense, [])
+
 
 
 class TestStudy(unittest.TestCase):
