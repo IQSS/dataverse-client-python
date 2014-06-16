@@ -234,6 +234,11 @@ class Study(object):
         self._refresh(deposit_receipt=receipt)
     
     def delete_file(self, dataverse_file):
+        if dataverse_file.is_released:
+            raise DataverseException(
+                'Released versions of files cannot be deleted.'
+            )
+
         receipt = self.dataverse.connection.swordConnection.delete_file(
             dataverse_file.edit_media_uri
         )
