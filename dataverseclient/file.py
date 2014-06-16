@@ -12,49 +12,49 @@ import sword2
 import utils
 
 
-class DraftFile(object):
-    def __init__(self, name, edit_media_uri, updated, study):
+class DataverseFile(object):
+    def __init__(self, name, study, edit_media_uri=None, download_url=None):
         self.name = utils.sanitize(name)
-        self.edit_media_uri = edit_media_uri
-        self.updated = updated
         self.study = study
-        self.id = edit_media_uri.split('/')[-2]
 
-        host = urlparse.urlparse(edit_media_uri).netloc
-        self.download_url = 'http://{0}/dvn/FileDownload/?fileId={1}'.format(
-            host, self.id
-        )
-        
+        if edit_media_uri:
+            self.is_released = False
+            self.edit_media_uri = edit_media_uri
+            host = urlparse.urlparse(edit_media_uri).netloc
+            self.download_url = 'http://{0}/dvn/FileDownload/?fileId={1}'.format(host, self.id)
+            self.id = edit_media_uri.split('/')[-2]
+        elif download_url:
+            self.is_released = True
+            self.download_url = download_url
+            self.id = download_url.split('=')[-1]
+        else:
+            raise utils.DataverseException(
+                'Files must have an edit media uri or download url.'
+            )
+
     def __repr__(self):
         return """
     DATAVERSE FILE:
     Name: {0}
     Id: {1}
     Download URL: {2}
-    Status: DRAFT
-    """.format(self.name, self.id, self.download_url, self.edit_media_uri)
+    Status: {3}
+    """.format(
+            self.name,
+            self.id,
+            self.download_url,
+            self.edit_media_uri,
+            'RELEASED' if self.is_released else 'DRAFT',
+        )
 
     @classmethod
-    def from_statement(cls, statement, study):
-        uri = statement.cont_iri
-        name = uri.rsplit("/")[-1]
-        # Note: Updated element is meaningless at the moment
-        updated = datetime.strptime(statement.updated, "%Y-%m-%dT%H:%M:%S.%fZ")
-        return cls(name, uri,  updated, study)
+    def from_statement(cls, resource, study):
+        edit_media_uri = resource.cont_iri
+        name = edit_media_uri.rsplit("/")[-1]
+        return cls(name, study, edit_media_uri)
 
-
-class ReleasedFile(object):
-    def __init__(self, name, download_url, study):
-        self.name = utils.sanitize(name)
-        self.download_url = download_url
-        self.study = study
-        self.id = download_url.split('=')[-1]
-
-    def __repr__(self):
-        return """
-    DATAVERSE FILE:
-    Name: {0}
-    Id: {1}
-    Download URL: {2}
-    Status: RELEASED
-    """.format(self.name, self.id, self.download_url)
+    @classmethod
+    def from_metadata(cls, element, study):
+        name = element[0].text
+        download_url = element.attrib.get('URI')
+        return cls(name, study, download_url)

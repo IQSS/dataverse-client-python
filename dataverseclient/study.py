@@ -9,35 +9,24 @@ import sword2
 import requests
 
 # local modules
-from file import DraftFile, ReleasedFile
+from file import DataverseFile
 from utils import format_term, get_element, get_elements, DataverseException, sanitize
 
 
 class Study(object):
-    def __init__(self, entry=None, title=None, dataverse=None,
-                 edit_uri=None, edit_media_uri=None, statement_uri=None,
-                 **kwargs):
+    def __init__(self, entry=None, title=None, dataverse=None, edit_uri=None,
+                 edit_media_uri=None, statement_uri=None, **kwargs):
 
-        # Deposit receipt is added when Dataverse.add_study() is called on this study
-        self.last_receipt = None
-
-        self.dataverse = dataverse
-        # TODO: Add self.exists_on_dataverse / self.created
-        self.edit_uri = edit_uri
-        self.edit_media_uri = edit_media_uri
-        self.statement_uri = statement_uri
-
+        # Generate sword entry
         sword_entry = sword2.Entry(entry)
-
-        # Append title to entry
         if not get_elements(sword_entry.pretty_print(), namespace='dcterms', tag='title'):
+            # Append title to entry
             if isinstance(title, basestring):
                 sword_entry.add_field(format_term('title'), title)
             else:
                 raise DataverseException('Study needs a single, valid title.')
-
-        # Updates sword entry from keyword arguments
         if kwargs:
+            # Updates sword entry from keyword arguments
             for k in kwargs.keys():
                 if isinstance(kwargs[k], list):
                     for item in kwargs[k]:
@@ -46,6 +35,11 @@ class Study(object):
                     sword_entry.add_field(format_term(k), kwargs[k])
 
         self.entry = sword_entry.pretty_print()
+        self.last_receipt = None
+        self.dataverse = dataverse
+        self.edit_uri = edit_uri
+        self.edit_media_uri = edit_media_uri
+        self.statement_uri = statement_uri
 
     def __repr__(self):
         studyObject = pprint.pformat(self.__dict__)
@@ -66,10 +60,9 @@ class Study(object):
 
     @classmethod
     def from_entry(cls, entry_element, dataverse=None):
+
         id_element = get_element(entry_element, tag="id")
-                                    
         title_element = get_element(entry_element, tag="title")
-                                            
         edit_media_link_element = get_element(
             entry_element,
             tag="link",
@@ -155,7 +148,7 @@ class Study(object):
             self.statement_uri = link.get("href")
 
         statement = self.dataverse.connection.swordConnection.get_atom_sword_statement(self.statement_uri)
-        return [DraftFile.from_statement(res, self) for res in statement.resources]
+        return [DataverseFile.from_statement(res, self) for res in statement.resources]
 
     def get_released_files(self):
         """
@@ -168,16 +161,7 @@ class Study(object):
         xml = requests.get(metadata_url, verify=False).content
         elements = get_elements(xml, tag='otherMat')
 
-        files = []
-        for element in elements:
-            f = ReleasedFile(
-                name=element[0].text,
-                download_url=element.attrib.get('URI'),
-                study=self,
-            )
-            files.append(f)
-
-        return files
+        return [DataverseFile.from_metadata(element, self) for element in elements]
 
     def add_file(self, filepath):
         self.add_files([filepath])
@@ -249,9 +233,9 @@ class Study(object):
         )
         self._refresh(deposit_receipt=receipt)
     
-    def delete_file(self, dvnFile):
+    def delete_file(self, dataverse_file):
         receipt = self.dataverse.connection.swordConnection.delete_file(
-            dvnFile.edit_media_uri
+            dataverse_file.edit_media_uri
         )
         # Dataverse does not give a desposit receipt at this time
         self._refresh(deposit_receipt=None)
