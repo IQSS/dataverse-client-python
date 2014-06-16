@@ -8,7 +8,6 @@ from study import Study
 import utils
 
 class Dataverse(object):
-    # todo rename connection to dvn_connection?
     def __init__(self, connection, collection):
         self.connection = connection
         self.collection = collection
@@ -41,27 +40,11 @@ class Dataverse(object):
         )
                                                      
         study.dataverse = self
-        # todo: study.exists = True
-        study._refresh(deposit_receipt=receipt)
+        study._refresh(receipt=receipt)
         
     def delete_study(self, study):
+        # Receipt won't contain any information.
         receipt = self.connection.swordConnection.delete(study.edit_uri)
-        study.last_receipt = receipt
-
-    # Note: Functionality removed
-    # def delete_all_studies(self, bigHammer=False, ignoreExceptions=False):
-    #     # big hammer deletes all of the contents of a dataverse. this is dev only
-    #     # code that will be removed before release and big hammer will stop working
-    #     if bigHammer:
-    #         self.connection.swordConnection.delete(self.collection.href)
-    #     else:
-    #         studies = self.get_studies()
-    #         for s in studies:
-    #             try:
-    #                 self.delete_study(s)
-    #             except Exception as e:
-    #                 if not ignoreExceptions:
-    #                     raise e
         
     def get_studies(self):
         response = self.connection.swordConnection.get_resource(self.collection.href)

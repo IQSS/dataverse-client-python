@@ -20,9 +20,9 @@ class DataverseFile(object):
         if edit_media_uri:
             self.is_released = False
             self.edit_media_uri = edit_media_uri
+            self.id = edit_media_uri.split('/')[-2]
             host = urlparse.urlparse(edit_media_uri).netloc
             self.download_url = 'http://{0}/dvn/FileDownload/?fileId={1}'.format(host, self.id)
-            self.id = edit_media_uri.split('/')[-2]
         elif download_url:
             self.is_released = True
             self.download_url = download_url

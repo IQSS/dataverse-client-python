@@ -10,7 +10,8 @@ import requests
 
 # local modules
 from file import DataverseFile
-from utils import format_term, get_element, get_elements, DataverseException, sanitize
+from utils import format_term, get_element, get_elements, DataverseException, \
+    get_files_in_path, sanitize
 
 
 class Study(object):
@@ -35,8 +36,8 @@ class Study(object):
                     sword_entry.add_field(format_term(k), kwargs[k])
 
         self.entry = sword_entry.pretty_print()
-        self.last_receipt = None
         self.dataverse = dataverse
+
         self.edit_uri = edit_uri
         self.edit_media_uri = edit_media_uri
         self.statement_uri = statement_uri
@@ -63,20 +64,20 @@ class Study(object):
 
         id_element = get_element(entry_element, tag="id")
         title_element = get_element(entry_element, tag="title")
-        edit_media_link_element = get_element(
+        edit_media_element = get_element(
             entry_element,
             tag="link",
             attribute="rel",
             attribute_value="edit-media",
         )
 
-        edit_media_link = edit_media_link_element.get("href") if edit_media_link_element is not None else None
-
-        return cls(title=title_element.text,
-                   id=id_element.text,
-                   edit_uri=entry_element.base,   # edit iri
-                   edit_media_uri=edit_media_link,
-                   dataverse=dataverse)  # edit-media iri
+        return cls(
+            title=title_element.text,
+            id=id_element.text,
+            dataverse=dataverse,
+            edit_uri=entry_element.base,
+            edit_media_uri=edit_media_element.get('href'),
+        )
 
     @property
     def title(self):
@@ -96,13 +97,8 @@ class Study(object):
             tag="bibliographicCitation"
         ).text
 
-    def get_state(self):
-        return get_element(
-            self.get_statement(),
-            tag="category",
-            attribute="term",
-            attribute_value="latestVersionState"
-        ).text
+    def get_entry(self):
+        return self.dataverse.connection.swordConnection.get_resource(self.edit_uri).content
 
     def get_statement(self):
         if not self.statement_uri:
@@ -114,12 +110,17 @@ class Study(object):
                 attribute_value="http://purl.org/net/sword/terms/statement",
             )
             self.statement_uri = link.get("href")
-        
+
         statement = self.dataverse.connection.swordConnection.get_resource(self.statement_uri).content
         return statement
 
-    def get_entry(self):
-        return self.dataverse.connection.swordConnection.get_resource(self.edit_uri).content
+    def get_state(self):
+        return get_element(
+            self.get_statement(),
+            tag="category",
+            attribute="term",
+            attribute_value="latestVersionState"
+        ).text
 
     def get_file(self, file_name, released=False):
 
@@ -137,18 +138,9 @@ class Study(object):
         if released:
             return self.get_released_files()
 
-        if not self.statement_uri:
-            entry = self.get_entry()
-            link = get_element(
-                entry,
-                tag="link",
-                attribute="rel",
-                attribute_value="http://purl.org/net/sword/terms/statement",
-            )
-            self.statement_uri = link.get("href")
-
-        statement = self.dataverse.connection.swordConnection.get_atom_sword_statement(self.statement_uri)
-        return [DataverseFile.from_statement(res, self) for res in statement.resources]
+        sword_statement = sword2.Atom_Sword_Statement(self.get_statement())
+        return [DataverseFile.from_statement(resource, self)
+                for resource in sword_statement.resources]
 
     def get_released_files(self):
         """
@@ -161,7 +153,8 @@ class Study(object):
         xml = requests.get(metadata_url, verify=False).content
         elements = get_elements(xml, tag='otherMat')
 
-        return [DataverseFile.from_metadata(element, self) for element in elements]
+        return [DataverseFile.from_metadata(element, self)
+                for element in elements]
 
     def add_file(self, filepath):
         self.add_files([filepath])
@@ -169,9 +162,7 @@ class Study(object):
     def add_files(self, filepaths):
         # Convert a directory to a list of files
         if len(filepaths) == 1 and os.path.isdir(filepaths[0]):
-            filepaths = self._open_directory(filepaths[0])
-
-        # Todo: Handle file versions
+            filepaths = get_files_in_path(filepaths[0])
 
         # Zip up files
         s = StringIO.StringIO()
@@ -179,10 +170,10 @@ class Study(object):
         for filepath in filepaths:
             filename = os.path.basename(filepath)
             if os.path.getsize(filepath) < 5:
-                raise DataverseException('The DataVerse does not currently accept files less than 5 bytes. '
+                raise DataverseException('The Dataverse does not currently accept files less than 5 bytes. '
                                    '{} cannot be uploaded.'.format(filename))
             elif filename in [f.name for f in self.get_files()]:
-                raise DataverseException('The file {} already exists on the DataVerse'.format(filename))
+                raise DataverseException('The file {} already exists on the Dataverse'.format(filename))
             zip_file.write(filepath)
         zip_file.close()
         content = s.getvalue()
@@ -214,24 +205,11 @@ class Study(object):
 
         self._refresh()
 
-    # TODO: DANGEROUS! Will delete all unspecified fields! Deposit receipts only give SOME of the fields
-    # def update_metadata(self):
-    #     #todo: consumer has to use the methods on self.entry (from sword2.atom_objects) to update the
-    #     # metadata before calling this method. that's a little cumbersome...
-    #     depositReceipt = self.hostDataverse.connection.swordConnection.update(
-    #         dr=self.lastDepositReceipt,
-    #         edit_iri=self.editUri,
-    #         edit_media_iri=self.editMediaUri,
-    #         metadata_entry=self.entry,
-    #     )
-    #     self._refresh(deposit_receipt=depositReceipt)
-    
     def release(self):
         receipt = self.dataverse.connection.swordConnection.complete_deposit(
-            dr=self.last_receipt,
             se_iri=self.edit_uri,
         )
-        self._refresh(deposit_receipt=receipt)
+        self._refresh(receipt=receipt)
     
     def delete_file(self, dataverse_file):
         if dataverse_file.is_released:
@@ -243,30 +221,29 @@ class Study(object):
             dataverse_file.edit_media_uri
         )
         # Dataverse does not give a desposit receipt at this time
-        self._refresh(deposit_receipt=None)
+        self._refresh(receipt=None)
         
     def delete_all_files(self):
         for f in self.get_files():
             self.delete_file(f)
 
-
-    def _open_directory(self, path):
-        path = os.path.normpath(path) + os.sep
-        filepaths = []
-        for filename in os.listdir(path):
-            filepath = path + filename
-            if os.path.isdir(filepath):
-                filepaths += self._open_directory(filepath)
-            else:
-                filepaths.append(filepath)
-        return filepaths
+    # TODO: DANGEROUS! Will delete all unspecified fields! Deposit receipts only give SOME of the fields
+    # def update_metadata(self):
+    #     #todo: consumer has to use the methods on self.entry (from sword2.atom_objects) to update the
+    #     # metadata before calling this method. that's a little cumbersome...
+    #     depositReceipt = self.hostDataverse.connection.swordConnection.update(
+    #         dr=self.lastDepositReceipt,
+    #         edit_iri=self.editUri,
+    #         edit_media_iri=self.editMediaUri,
+    #         metadata_entry=self.entry,
+    #     )
+    #     self._refresh(deposit_receipt=depositReceipt)
 
     # if we perform a server operation, we should refresh the study object
-    def _refresh(self, deposit_receipt=None):
+    def _refresh(self, receipt=None):
         # todo is it possible for the deposit receipt to have different info than the study?
-        if deposit_receipt:
-            self.edit_uri = deposit_receipt.edit
-            self.edit_media_uri = deposit_receipt.edit_media
-            self.statement_uri = deposit_receipt.atom_statement_iri
-            self.last_receipt = deposit_receipt
+        if receipt:
+            self.edit_uri = receipt.edit
+            self.edit_media_uri = receipt.edit_media
+            self.statement_uri = receipt.atom_statement_iri
         self.entry = self.get_entry()

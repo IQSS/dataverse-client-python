@@ -1,5 +1,4 @@
-__author__="peterbull"
-__date__ ="$Aug 16, 2013 12:07:48 PM$"
+import os
 
 from lxml import etree
 import bleach
@@ -53,6 +52,17 @@ def format_term(term):
     else:
         return 'dcterms_{0}'.format(term)
 
+
+def get_files_in_path(path):
+    path = os.path.normpath(path) + os.sep
+    filepaths = []
+    for filename in os.listdir(path):
+        filepath = path + filename
+        if os.path.isdir(filepath):
+            filepaths += get_files_in_path(filepath)
+        else:
+            filepaths.append(filepath)
+    return filepaths
 
 def sanitize(value):
     return bleach.clean(value, strip=True, tags=[], attributes=[], styles=[])
