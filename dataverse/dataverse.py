@@ -7,6 +7,7 @@ from lxml import etree
 from study import Study
 import utils
 
+
 class Dataverse(object):
     def __init__(self, connection, collection):
         self.connection = connection

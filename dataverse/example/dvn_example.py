@@ -18,8 +18,8 @@ import traceback
 # downloaded modules
 
 # local modules
-from dataverseclient.study import Study
-from dataverseclient.connection import DvnConnection
+from dataverse.study import Study
+from dataverse.connection import Connection
 from config import DEFAULT_PASSWORD, DEFAULT_HOST, DEFAULT_CERT, DEFAULT_USERNAME, \
     EXAMPLE_DICT
 
@@ -28,7 +28,7 @@ def main():
     
     dv = None # declare outside so except clause has access
     try:
-        dvc = DvnConnection(
+        dvc = Connection(
             username=DEFAULT_USERNAME,
             password=DEFAULT_PASSWORD,
             host=DEFAULT_HOST,

@@ -8,11 +8,11 @@ logging.basicConfig(level=logging.ERROR)
 import sword2
 
 # local modules
-from dataverseclient.study import Study
-from dataverseclient.connection import DvnConnection
-from dataverseclient.example.config import DEFAULT_USERNAME, DEFAULT_HOST, DEFAULT_PASSWORD
-from dataverseclient.test.config import PICS_OF_CATS_STUDY, ATOM_STUDY
-from dataverseclient import utils
+from dataverse.study import Study
+from dataverse.connection import Connection
+from dataverse.example.config import DEFAULT_USERNAME, DEFAULT_HOST, DEFAULT_PASSWORD
+from dataverse.test.config import PICS_OF_CATS_STUDY, ATOM_STUDY
+from dataverse import utils
 
 
 class TestUtils(unittest.TestCase):
@@ -82,7 +82,7 @@ class TestStudyOperations(unittest.TestCase):
     def setUpClass(self):
         
         print "Connecting to DVN."
-        self.dvc = DvnConnection(
+        self.dvc = Connection(
             username=DEFAULT_USERNAME,
             password=DEFAULT_PASSWORD,
             host=DEFAULT_HOST,

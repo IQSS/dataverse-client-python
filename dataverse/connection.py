@@ -11,7 +11,7 @@ import sword2
 from dataverse import Dataverse
 
 
-class DvnConnection(object):
+class Connection(object):
 
     def __init__(self, username, password, host, cert=None, disable_ssl=False):
         # Connection Properties
