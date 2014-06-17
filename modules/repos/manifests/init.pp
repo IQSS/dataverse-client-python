@@ -1,5 +1,0 @@
-class repos {
-
-include epel
-
-}

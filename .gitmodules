@@ -1,3 +1,0 @@
-[submodule "modules/epel"]
-	path = modules/epel
-	url = https://github.com/stahnma/puppet-module-epel.git
