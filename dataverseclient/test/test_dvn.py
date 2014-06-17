@@ -86,7 +86,7 @@ class TestStudyOperations(unittest.TestCase):
             username=DEFAULT_USERNAME,
             password=DEFAULT_PASSWORD,
             host=DEFAULT_HOST,
-            disable_ssl_certificate_validation=True
+            disable_ssl=True
         )
                         
         print "Getting Dataverse"

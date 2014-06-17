@@ -98,7 +98,7 @@ class Study(object):
         ).text
 
     def get_entry(self):
-        return self.dataverse.connection.swordConnection.get_resource(self.edit_uri).content
+        return self.dataverse.connection.sword.get_resource(self.edit_uri).content
 
     def get_statement(self):
         if not self.statement_uri:
@@ -111,7 +111,7 @@ class Study(object):
             )
             self.statement_uri = link.get("href")
 
-        statement = self.dataverse.connection.swordConnection.get_resource(self.statement_uri).content
+        statement = self.dataverse.connection.sword.get_resource(self.statement_uri).content
         return statement
 
     def get_state(self):
@@ -206,7 +206,7 @@ class Study(object):
         self._refresh()
 
     def release(self):
-        receipt = self.dataverse.connection.swordConnection.complete_deposit(
+        receipt = self.dataverse.connection.sword.complete_deposit(
             se_iri=self.edit_uri,
         )
         self._refresh(receipt=receipt)
@@ -217,7 +217,7 @@ class Study(object):
                 'Released versions of files cannot be deleted.'
             )
 
-        receipt = self.dataverse.connection.swordConnection.delete_file(
+        receipt = self.dataverse.connection.sword.delete_file(
             dataverse_file.edit_media_uri
         )
         # Dataverse does not give a desposit receipt at this time
@@ -231,7 +231,7 @@ class Study(object):
     # def update_metadata(self):
     #     #todo: consumer has to use the methods on self.entry (from sword2.atom_objects) to update the
     #     # metadata before calling this method. that's a little cumbersome...
-    #     depositReceipt = self.hostDataverse.connection.swordConnection.update(
+    #     depositReceipt = self.hostDataverse.connection.sword.update(
     #         dr=self.lastDepositReceipt,
     #         edit_iri=self.editUri,
     #         edit_media_iri=self.editMediaUri,

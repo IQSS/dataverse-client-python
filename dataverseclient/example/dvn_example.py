@@ -28,10 +28,12 @@ def main():
     
     dv = None # declare outside so except clause has access
     try:
-        dvc = DvnConnection(username=DEFAULT_USERNAME,
-                        password=DEFAULT_PASSWORD,
-                        host=DEFAULT_HOST, 
-                        disable_ssl_certificate_validation=True)
+        dvc = DvnConnection(
+            username=DEFAULT_USERNAME,
+            password=DEFAULT_PASSWORD,
+            host=DEFAULT_HOST,
+            disable_ssl=True,
+        )
                         
         
         dvs = dvc.get_dataverses()
@@ -92,7 +94,7 @@ def main():
                 dv.swordConnection.history = json.dumps(dv.connection.swordConnection.history, indent=True)
             except:
                 pass
-            #print "Call History:\n", dv.connection.swordConnection.history
+            #print "Call History:\n", dv.connection.sword.history
 
 if __name__ == "__main__":
     main()

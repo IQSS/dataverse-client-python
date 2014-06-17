@@ -16,7 +16,7 @@ class Dataverse(object):
     @property
     def is_released(self):
         # Get entry resource for collection
-        collection_info = self.connection.swordConnection.get_resource(self.collection.href).content
+        collection_info = self.connection.sword.get_resource(self.collection.href).content
         status = utils.get_element(
             collection_info,
             namespace="http://purl.org/net/sword/terms/state",
@@ -34,7 +34,7 @@ class Dataverse(object):
 
     def add_study(self, study):
         # this creates the study AND generates a deposit receipt
-        receipt = self.connection.swordConnection.create(
+        receipt = self.connection.sword.create(
             col_iri=self.collection.href,
             metadata_entry=study.entry,
         )
@@ -44,10 +44,10 @@ class Dataverse(object):
         
     def delete_study(self, study):
         # Receipt won't contain any information.
-        receipt = self.connection.swordConnection.delete(study.edit_uri)
+        receipt = self.connection.sword.delete(study.edit_uri)
         
     def get_studies(self):
-        response = self.connection.swordConnection.get_resource(self.collection.href)
+        response = self.connection.sword.get_resource(self.collection.href)
         entries = utils.get_elements(response.content, tag='entry')
         return [Study.from_entry(entry, dataverse=self) for entry in entries]
 
