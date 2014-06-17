@@ -93,7 +93,7 @@ class Study(object):
     def citation(self):
         return get_element(
             self.get_entry(),
-            namespace='dcterms',
+            namespace='http://purl.org/dc/terms/',
             tag="bibliographicCitation"
         ).text
 

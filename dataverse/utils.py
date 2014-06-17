@@ -64,5 +64,6 @@ def get_files_in_path(path):
             filepaths.append(filepath)
     return filepaths
 
+
 def sanitize(value):
     return bleach.clean(value, strip=True, tags=[], attributes=[], styles=[])
