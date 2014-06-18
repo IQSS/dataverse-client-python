@@ -27,7 +27,7 @@ setup(
     name='dataverse',
     version='0.1',
     description='Python client for Dataverse version 3.X',
-    long_description=read("README.md"),
+    long_description=read("readme.md"),
     author='Dataverse',
     author_email='rliebz@gmail.com',
     url='https://github.com/rliebz/dvn-client-python',
