@@ -43,7 +43,6 @@ class DataverseFile(object):
             self.name,
             self.id,
             self.download_url,
-            self.edit_media_uri,
             'RELEASED' if self.is_released else 'DRAFT',
         )
 
