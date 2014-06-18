@@ -5,8 +5,6 @@ import unittest
 import logging
 logging.basicConfig(level=logging.ERROR)
 
-import sword2
-
 # local modules
 from dataverse.study import Study
 from dataverse.connection import Connection

@@ -7,7 +7,6 @@ from setuptools.command.test import test as TestCommand
 
 
 REQUIRES = [
-    '-e git+https://github.com/rliebz/python-client-sword2.git#egg=sword2',
     'bleach==1.2.2',
     'requests==2.2.1',
     'lxml==3.2.5',
@@ -52,6 +51,7 @@ setup(
     ],
     test_suite='dataverse/test',
     tests_require=TEST_REQUIRES,
-    cmdclass={'test': unittest}
+    cmdclass={'test': unittest},
+    dependency_links= ['https://github.com/rliebz/python-client-sword2.git#egg=sword2']
 
 )
