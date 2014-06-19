@@ -10,7 +10,7 @@ REQUIRES = [
     'bleach==1.2.2',
     'requests==2.2.1',
     'lxml==3.2.5',
-    'sword2',
+    'sword2>=0.0',
 ]
 
 TEST_REQUIRES = [
@@ -53,6 +53,6 @@ setup(
     test_suite='dataverse/test',
     tests_require=TEST_REQUIRES,
     cmdclass={'test': unittest},
-    dependency_links= ['http://github.com/rliebz/python-client-sword2/tarball/master#egg=sword2']
+    dependency_links= ['http://github.com/rliebz/python-client-sword2/tarball/master#egg=sword2-0.1']
 
 )
