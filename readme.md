@@ -17,12 +17,17 @@ environment. Please note that before you run `vagrant up` you'll need to run
 
 ## Installation
 
-You will need:
+For development, you will need:
 
 * Python 2.6+
 * [pip](http://www.pip-installer.org/en/latest/)
 * gcc compiler (For OSX you will need xcode + command line tools, or [standalone install](https://github.com/kennethreitz/osx-gcc-installer#readme))
 * Dataverse account
+
+To install dataverse as a package:
+
+    $ pip install -e git+https://github.com/rliebz/python-client-sword2.git#egg=sword2
+    $ pip install -e git+https://github.com/rliebz/dvn-client-python.git#egg=dataverse
 
 Once you have satisfied the above requirements, try the following commands.
 

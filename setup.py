@@ -9,8 +9,7 @@ from setuptools.command.test import test as TestCommand
 REQUIRES = [
     'bleach==1.2.2',
     'requests==2.2.1',
-    'lxml==3.2.5',
-    'sword2>=0.0',
+    'lxml==3.2.5'
 ]
 
 TEST_REQUIRES = [
@@ -43,16 +42,8 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
-        "Programming Language :: Python :: 2",
-        'Programming Language :: Python :: 2.6',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
     ],
     test_suite='dataverse/test',
     tests_require=TEST_REQUIRES,
-    cmdclass={'test': unittest},
-    dependency_links= ['http://github.com/rliebz/python-client-sword2/tarball/master#egg=sword2-0.1']
-
+    cmdclass={'test': unittest}
 )
