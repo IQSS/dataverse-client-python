@@ -50,10 +50,10 @@ class DataverseFile(object):
     def from_statement(cls, resource, study):
         edit_media_uri = resource.cont_iri
         name = edit_media_uri.rsplit("/")[-1]
-        return cls(name, study, edit_media_uri)
+        return cls(name, study, edit_media_uri=edit_media_uri)
 
     @classmethod
     def from_metadata(cls, element, study):
         name = element[0].text
         download_url = element.attrib.get('URI')
-        return cls(name, study, download_url)
+        return cls(name, study, download_url=download_url)
