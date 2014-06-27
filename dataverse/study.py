@@ -36,6 +36,7 @@ class Study(object):
                     sword_entry.add_field(format_term(k), kwargs[k])
 
         self.entry = sword_entry.pretty_print()
+        self.statement = None
         self.dataverse = dataverse
 
         self.edit_uri = edit_uri
@@ -81,7 +82,7 @@ class Study(object):
 
     @property
     def title(self):
-        dirty_title = get_element(self.get_statement(), tag='title').text
+        dirty_title = get_element(self.entry, tag='title').text
         return sanitize(dirty_title)
 
     @property
@@ -100,7 +101,10 @@ class Study(object):
     def get_entry(self):
         return self.dataverse.connection.sword.get_resource(self.edit_uri).content
 
-    def get_statement(self):
+    def get_statement(self, refresh=False):
+        if not refresh and self.statement:
+            return self.statement
+
         if not self.statement_uri:
             entry = self.get_entry()
             link = get_element(
@@ -111,8 +115,8 @@ class Study(object):
             )
             self.statement_uri = link.get("href")
 
-        statement = self.dataverse.connection.sword.get_resource(self.statement_uri).content
-        return statement
+        self.statement = self.dataverse.connection.sword.get_resource(self.statement_uri).content
+        return self.statement
 
     def get_state(self):
         return get_element(
