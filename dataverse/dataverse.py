@@ -37,7 +37,7 @@ class Dataverse(object):
         # this creates the study AND generates a deposit receipt
         receipt = self.connection.sword.create(
             col_iri=self.collection.href,
-            metadata_entry=study.entry,
+            metadata_entry=study.get_entry(),
         )
                                                      
         study.dataverse = self
@@ -59,4 +59,4 @@ class Dataverse(object):
         return next((s for s in self.get_studies() if s.title == title), None)
 
     def get_study_by_string_in_entry(self, string):
-        return next((s for s in self.get_studies() if string in s.entry), None)
+        return next((s for s in self.get_studies() if string in s.get_entry()), None)

@@ -3,6 +3,7 @@ import os
 import pprint
 import StringIO
 from zipfile import ZipFile
+from sword2.exceptions import HTTPResponseError
 
 # downloaded modules
 import sword2
@@ -20,12 +21,16 @@ class Study(object):
 
         # Generate sword entry
         sword_entry = sword2.Entry(entry)
-        if not get_elements(sword_entry.pretty_print(), namespace='dcterms', tag='title'):
+        sword_title = get_element(sword_entry.pretty_print(), namespace='dcterms', tag='title')
+        if sword_title is None:
             # Append title to entry
             if isinstance(title, basestring):
+                self.title = title
                 sword_entry.add_field(format_term('title'), title)
             else:
                 raise DataverseException('Study needs a single, valid title.')
+        else:
+            self.title = sword_title.text
         if kwargs:
             # Updates sword entry from keyword arguments
             for k in kwargs.keys():
@@ -35,8 +40,9 @@ class Study(object):
                 else:
                     sword_entry.add_field(format_term(k), kwargs[k])
 
-        self.entry = sword_entry.pretty_print()
-        self.statement = None
+        self._entry = sword_entry.pretty_print()
+        self._statement = None
+        self._state = None
         self.dataverse = dataverse
 
         self.edit_uri = edit_uri
@@ -44,15 +50,15 @@ class Study(object):
         self.statement_uri = statement_uri
 
     def __repr__(self):
-        studyObject = pprint.pformat(self.__dict__)
-        entryObject = self.entry
+        study_object = pprint.pformat(self.__dict__)
+        entry_object = self._entry
         return """STUDY ========= "
         study=
 {so}
         
         entry=
 {eo}
-/STUDY ========= """.format(so=studyObject, eo=entryObject)
+/STUDY ========= """.format(so=study_object, eo=entry_object)
 
     @classmethod
     def from_xml_file(cls, xml_file):
@@ -81,11 +87,6 @@ class Study(object):
         )
 
     @property
-    def title(self):
-        dirty_title = get_element(self.entry, tag='title').text
-        return sanitize(dirty_title)
-
-    @property
     def doi(self):
         url_pieces = self.edit_media_uri.rsplit("/")
         return '/'.join([url_pieces[-3], url_pieces[-2], url_pieces[-1]])
@@ -98,33 +99,55 @@ class Study(object):
             tag="bibliographicCitation"
         ).text
 
-    def get_entry(self):
-        return self.dataverse.connection.sword.get_resource(self.edit_uri).content
+    def get_entry(self, refresh=False):
+        if not refresh and self._entry:
+            return self._entry
+
+        self._entry = self.dataverse.connection.sword.get_resource(self.edit_uri).content
+        return self._entry
 
     def get_statement(self, refresh=False):
-        if not refresh and self.statement:
-            return self.statement
+        if not refresh and self._statement:
+            return self._statement
 
         if not self.statement_uri:
-            entry = self.get_entry()
+            # Try to find statement uri without a request to the server
             link = get_element(
-                entry,
+                self.get_entry(),
                 tag="link",
                 attribute="rel",
                 attribute_value="http://purl.org/net/sword/terms/statement",
             )
+            if link is None:
+                # Find link with request to server
+                link = get_element(
+                    self.get_entry(refresh=True),
+                    tag="link",
+                    attribute="rel",
+                    attribute_value="http://purl.org/net/sword/terms/statement",
+                )
             self.statement_uri = link.get("href")
 
-        self.statement = self.dataverse.connection.sword.get_resource(self.statement_uri).content
-        return self.statement
+        self._statement = self.dataverse.connection.sword.get_resource(self.statement_uri).content
+        return self._statement
 
-    def get_state(self):
-        return get_element(
-            self.get_statement(),
-            tag="category",
-            attribute="term",
-            attribute_value="latestVersionState"
-        ).text
+    def get_state(self, refresh=False):
+        if not refresh and self._state:
+            return self._state
+
+        try:
+            self._state = get_element(
+                self.get_statement(refresh),
+                tag="category",
+                attribute="term",
+                attribute_value="latestVersionState"
+            ).text
+            return self._state
+        except HTTPResponseError as e:
+            # Study was deleted without being released.
+            # For simplicity's sake, we'll call it deaccessioned
+            self._state = 'DEACCESSIONED'
+            return self._state
 
     def get_file(self, file_name, released=False):
 
@@ -250,4 +273,6 @@ class Study(object):
             self.edit_uri = receipt.edit
             self.edit_media_uri = receipt.edit_media
             self.statement_uri = receipt.atom_statement_iri
-        self.entry = self.get_entry()
+        self.get_statement(refresh=True)
+        self.get_entry(refresh=True)
+        self.get_state(refresh=True)

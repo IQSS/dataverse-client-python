@@ -62,23 +62,38 @@ class TestStudy(unittest.TestCase):
     def test_init(self):
         study = Study(title='My Study', publisher='Mr. Pub Lisher')
         title = utils.get_element(
-            study.entry,
+            study._entry,
             namespace='dcterms',
             tag='title'
         ).text
         publisher = utils.get_element(
-            study.entry,
+            study._entry,
             namespace='dcterms',
             tag='publisher'
         ).text
         self.assertEqual(title, 'My Study')
         self.assertEqual(publisher, 'Mr. Pub Lisher')
 
+    def test_init_from_xml(self):
+        study = Study.from_xml_file(ATOM_STUDY)
+        title = utils.get_element(
+            study.get_entry(),
+            namespace='dcterms',
+            tag='title'
+        ).text
+        publisher = utils.get_element(
+            study.get_entry(),
+            namespace='dcterms',
+            tag='rights'
+        ).text
+        self.assertEqual(title, 'Roasting at Home')
+        self.assertEqual(publisher, 'Creative Commons CC-BY 3.0 (unported) http://creativecommons.org/licenses/by/3.0/')
+
 
 class TestStudyOperations(unittest.TestCase):
     @classmethod
     def setUpClass(self):
-        
+
         print "Connecting to DVN."
         self.dvc = Connection(
             username=DEFAULT_USERNAME,
@@ -86,20 +101,21 @@ class TestStudyOperations(unittest.TestCase):
             host=DEFAULT_HOST,
             disable_ssl=True
         )
-                        
+
         print "Getting Dataverse"
         self.dv = self.dvc.get_dataverses()[0]
         self.dv.is_released
-        
+
         print "Removing any existing studies."
         studies = self.dv.get_studies()
         for study in studies :
             if study.get_state() != 'DEACCESSIONED':
                 self.dv.delete_study(study)
-        
+        print 'Dataverse emptied.'
+
     def setUp(self):
         #runs before each test method
-        
+
         #create a study for each test
         s = Study(**PICS_OF_CATS_STUDY)
         self.dv.add_study(s)
@@ -107,13 +123,13 @@ class TestStudyOperations(unittest.TestCase):
         self.s = self.dv.get_study_by_doi(doi)
         self.assertEqual(doi, self.s.doi)
         return
-    
+
     def tearDown(self):
         try:
             self.dv.delete_study(self.s)
         finally:
             return
-    
+
     def test_create_study_from_xml(self):
         new_study = Study.from_xml_file(ATOM_STUDY)
         self.dv.add_study(new_study)
@@ -134,10 +150,10 @@ class TestStudyOperations(unittest.TestCase):
         self.s.upload_file('file2.txt', 'This is the second simple text file!')
         sleep(3) #wait for ingest
         actual_files = [f.name for f in self.s.get_files()]
-        
+
         self.assertIn('file.txt', actual_files)
         self.assertIn('file2.txt', actual_files)
-        
+
     def test_display_atom_entry(self):
         # this just tests we can get an entry back, but does
         # not do anything with that xml yet. however, we do use get_entry
@@ -173,14 +189,15 @@ class TestStudyOperations(unittest.TestCase):
         startingNumberOfStudies = len(self.dv.get_studies())
         self.assertTrue(startingNumberOfStudies > 0)
         self.dv.delete_study(atomStudy)
+        self.assertEqual(atomStudy.get_state(refresh=True), 'DEACCESSIONED')
         self.assertEqual(len(self.dv.get_studies()), startingNumberOfStudies - 1)
         
     def test_release_study(self):
         self.assertTrue(self.s.get_state() == "DRAFT")
         self.s.release()
         self.assertTrue(self.s.get_state() == "RELEASED")
-        self.dv.delete_study(self.s) #this should deaccession
-        self.assertTrue(self.s.get_state() == "DEACCESSIONED")
+        self.dv.delete_study(self.s)
+        self.assertTrue(self.s.get_state(refresh=True) == "DEACCESSIONED")
     
     def test_dataverse_released(self):
         self.assertTrue(self.dv.is_released)
