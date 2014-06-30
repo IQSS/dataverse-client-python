@@ -88,8 +88,8 @@ class Study(object):
 
     @property
     def doi(self):
-        url_pieces = self.edit_media_uri.rsplit("/")
-        return '/'.join([url_pieces[-3], url_pieces[-2], url_pieces[-1]])
+        # Note: This depends strongly on URL structure, and may break easily
+        return self.edit_media_uri.rsplit("/study/")[-1]
 
     @property
     def citation(self):
