@@ -1,3 +1,5 @@
+**This readme is for an older version of the client, and is largely out of date**
+
 ## Dataverse Network (DVN) API Client
 
 This is a library for writing Python applications that make use of Dataverse
