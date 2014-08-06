@@ -7,9 +7,9 @@ from setuptools.command.test import test as TestCommand
 
 
 REQUIRES = [
-    'bleach==1.2.2',
-    'requests==2.2.1',
-    'lxml==3.2.5'
+    'bleach>=1.2.2',
+    'requests>=2.2.1',
+    'lxml>=3.2.5'
 ]
 
 TEST_REQUIRES = [
