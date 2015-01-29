@@ -1,6 +1,6 @@
 DEFAULT_USERNAME = "changeme"
 DEFAULT_PASSWORD = "changeme"
-DEFAULT_HOST = "dvn-demo.iq.harvard.edu"
+DEFAULT_HOST = "dataverse-demo.iq.harvard.edu"
 DEFAULT_CERT = "dataverseclient/resources/dvn-4.hmdc.harvard.edu"
 
 EXAMPLE_DICT = {

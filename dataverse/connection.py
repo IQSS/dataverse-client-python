@@ -1,56 +1,48 @@
-"""
-Wrapper around the sword2.Connection class.
-"""
+from lxml import etree
+import requests
 
-# python base lib modules
-
-#downloaded modules
-import sword2
-
-#local modules
 from dataverse import Dataverse
+from utils import get_elements
 
 
 class Connection(object):
 
-    def __init__(self, username, password, host, cert=None, disable_ssl=False):
+    def __init__(self, host, token=None, username=None, password=None):
         # Connection Properties
+        self.token = token
         self.username = username
         self.password = password
         self.host = host
-        self.cert = cert
-        self.disable_ssl = disable_ssl
-        self.sd_uri = "https://{host}/dvn/api/data-deposit/v1/swordv2/service-document".format(host=self.host)
+        self.sd_uri = "https://{host}/dvn/api/data-deposit/v1.1/swordv2/service-document".format(host=self.host)
         
         # Connection Status and SWORD Properties
-        self.sword = None
         self.status = None
         self.connected = False
+        self.service_document = None
         
         self.connect()
 
-    def connect(self):
-        self.sword = sword2.Connection(
-            service_document_iri=self.sd_uri,
-            user_name=self.username,
-            user_pass=self.password,
-            ca_certs=self.cert,
-            disable_ssl_certificate_validation=self.disable_ssl,
-        )
+    @property
+    def auth(self):
+        return (self.token, None) if self.token else (self.username, self.password)
 
-        # Update history with data retrieval attempt
-        self.sword.get_service_document()
-        self.status = self.sword.history[1]['payload']['response']['status']
+    def connect(self):
+        resp = requests.get(self.sd_uri, auth=self.auth)
+        self.status = resp.status_code
         self.connected = True if self.status == 200 else False
+        self.service_document = etree.XML(resp.content)
         
     def get_dataverses(self):
         # Get latest dataverse information
         self.connect()
 
-        # Note: All SWORD collections are stored in the 0th workspace
-        _, collections = self.sword.workspaces[0]
+        # Dataverse 4.0 beta currently returns collection for "Harvard" DV,
+        # which the user may not have permissions on. Could cause problems.
+        collections = get_elements(
+            self.service_document[0],
+            tag="collection",
+        )
 
-        # Cast SWORD collections to Dataverses
         return [Dataverse(self, col) for col in collections]
 
     def get_dataverse(self, alias):

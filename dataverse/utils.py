@@ -3,8 +3,7 @@ import os
 from lxml import etree
 import bleach
 
-REPLACEMENT_DICT = {'id': 'identifier', 'author': 'creator', 'producer': 'publisher', 'restriction': 'rights',
-                    'keyword': 'subject', 'publication': 'isReferencedBy'}
+from sword import SWORD_NAMESPACE, REPLACEMENT_DICT, UNIQUE_FIELDS
 
 
 class DataverseException(Exception):
@@ -12,26 +11,20 @@ class DataverseException(Exception):
 
 
 # factor out xpath operations so we don't have to look at its ugliness
-def get_element(root, tag=None, namespace=None, attribute=None, attribute_value=None):
+def get_element(root, tag='*', namespace=None, attribute=None, attribute_value=None):
     elements = get_elements(root, tag, namespace, attribute, attribute_value)
     return elements[0] if elements else None
 
 
-def get_elements(root, tag=None, namespace=None, attribute=None, attribute_value=None):
-    # accept either an lxml.Element or a string of xml
-    # if a string, convert to etree element
+def get_elements(root, tag='*', namespace=None, attribute=None, attribute_value=None):
+
+    # If string, convert to etree element
     if isinstance(root, str):
         root = etree.XML(root)
 
-    try:
-        namespace = root.nsmap[namespace]
-    except KeyError:
-        # namespace not expressed in map; use literal
-        pass
+    namespace = root.nsmap.get(namespace, namespace)
 
-    if not tag:
-        xpath = "*"
-    elif namespace is None:
+    if namespace is None:
         xpath = tag
     else:
         xpath = "{{{ns}}}{tag}".format(ns=namespace, tag=tag)
@@ -46,11 +39,53 @@ def get_elements(root, tag=None, namespace=None, attribute=None, attribute_value
     return root.findall(xpath)
 
 
-def format_term(term):
-    if term in REPLACEMENT_DICT.keys():
-        return 'dcterms_{0}'.format(REPLACEMENT_DICT[term])
-    else:
-        return 'dcterms_{0}'.format(term)
+def format_term(term, namespace):
+
+    if term in REPLACEMENT_DICT:
+        term = REPLACEMENT_DICT[term]
+
+    return '{{{0}}}{1}'.format(SWORD_NAMESPACE[namespace], term)
+
+
+def add_field(entry, key, value, namespace='dcterms'):
+
+    formatted_key = format_term(key, namespace)
+    element = entry.find(formatted_key) if key in UNIQUE_FIELDS else None
+
+    if element is None:
+        element = etree.SubElement(entry, formatted_key, nsmap=SWORD_NAMESPACE)
+
+    element.text = value
+
+
+# def add_author(entry, formatted_key, author, namespace):
+#
+#     # TODO Accept base strings?
+#
+#     author_element = etree.SubElement(entry, formatted_key, nsmap=SWORD_NAMESPACE)
+#
+#     name_element = etree.SubElement(
+#         author_element,
+#         format_term('name', namespace),
+#         nsmap=SWORD_NAMESPACE,
+#     )
+#     name_element.text = author.get('name')
+#
+#     if author.get('uri'):
+#         uri_element = etree.SubElement(
+#             author_element,
+#             format_term('uri', namespace),
+#             nsmap=SWORD_NAMESPACE,
+#         )
+#         uri_element.text = author.get('uri')
+#
+#     if author.get('email'):
+#         email_element = etree.SubElement(
+#             author_element,
+#             format_term('email', namespace),
+#             nsmap=SWORD_NAMESPACE,
+#         )
+#         email_element.text = author.get('email')
 
 
 def get_files_in_path(path):
