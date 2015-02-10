@@ -26,6 +26,10 @@ class Connection(object):
     def auth(self):
         return (self.token, None) if self.token else (self.username, self.password)
 
+    @property
+    def has_api_key(self):
+        return True if self.token else False
+
     def connect(self):
         resp = requests.get(self.sd_uri, auth=self.auth)
         self.status = resp.status_code
@@ -37,12 +41,17 @@ class Connection(object):
         self.connect()
 
         # Dataverse 4.0 beta currently returns collection for "Harvard" DV,
-        # which the user may not have permissions on. Could cause problems.
+        # which the user may not have permissions on. Could cause problems.        
         collections = get_elements(
             self.service_document[0],
             tag="collection",
         )
-
+        # removes the Harvard dataverse; this is gross
+        # also removes the root dataverse (which users do not have read permission on)
+        def is_not_harvard_or_root(collection):
+            return (collection.attrib['href'].split('/')[-1] != 'harvard') and (collection.attrib['href'].split('/')[-1] != 'root')
+        collections = filter(is_not_harvard_or_root, collections)
+        
         return [Dataverse(self, col) for col in collections]
 
     def get_dataverse(self, alias):

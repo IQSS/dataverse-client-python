@@ -17,11 +17,12 @@ class Dataverse(object):
             auth=self.connection.auth,
         ).content
 
-        status = get_element(
+        status_tag = get_element(
             collection_info,
             namespace="http://purl.org/net/sword/terms/state",
             tag="dataverseHasBeenReleased",
-        ).text
+        )
+        status = status_tag.text
 
         return status.lower() == 'true'
 
