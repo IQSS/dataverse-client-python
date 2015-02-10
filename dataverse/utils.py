@@ -3,7 +3,7 @@ import os
 from lxml import etree
 import bleach
 
-from sword import SWORD_NAMESPACE, REPLACEMENT_DICT, UNIQUE_FIELDS
+from settings import SWORD_NAMESPACE, REPLACEMENT_DICT, UNIQUE_FIELDS
 
 
 class DataverseException(Exception):

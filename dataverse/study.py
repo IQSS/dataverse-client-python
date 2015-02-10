@@ -6,9 +6,11 @@ from lxml import etree
 import requests
 
 from file import DataverseFile
-from sword import SWORD_BOOTSTRAP
-from utils import get_element, get_elements, DataverseException, \
-    get_files_in_path, add_field
+from settings import SWORD_BOOTSTRAP
+from utils import (
+    get_element, get_elements, DataverseException, get_files_in_path,
+    add_field,
+)
 
 
 class Study(object):

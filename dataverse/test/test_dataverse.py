@@ -1,5 +1,4 @@
 import sys
-from time import sleep
 import unittest
 
 import logging
@@ -8,7 +7,7 @@ logging.basicConfig(level=logging.ERROR)
 # local modules
 from dataverse.study import Study
 from dataverse.connection import Connection
-from dataverse.example.config import DEFAULT_USERNAME, DEFAULT_HOST, DEFAULT_PASSWORD
+from dataverse.settings import DEFAULT_TOKEN, DEFAULT_HOST
 from dataverse.test.config import PICS_OF_CATS_STUDY, ATOM_STUDY
 from dataverse import utils
 
@@ -46,15 +45,13 @@ class TestUtils(unittest.TestCase):
 
     def test_format_term(self):
         # A term not in the replacement dict
-        term = 'title'
-        formatted_term = utils.format_term(term)
-        self.assertEqual(formatted_term, 'dcterms_title')
+        formatted_term = utils.format_term('title', namespace='dcterms')
+        self.assertEqual(formatted_term, '{http://purl.org/dc/terms/}title')
 
     def test_format_term_replace(self):
         # A term in the replacement dict
-        term = 'id'
-        formatted_term = utils.format_term(term)
-        self.assertEqual(formatted_term, 'dcterms_identifier')
+        formatted_term = utils.format_term('id', namespace='dcterms')
+        self.assertEqual(formatted_term, '{http://purl.org/dc/terms/}identifier')
 
 
 class TestStudy(unittest.TestCase):
@@ -72,6 +69,7 @@ class TestStudy(unittest.TestCase):
             tag='publisher'
         ).text
         self.assertEqual(title, 'My Study')
+        self.assertEqual(title, study.title)
         self.assertEqual(publisher, 'Mr. Pub Lisher')
 
     def test_init_from_xml(self):
@@ -91,20 +89,24 @@ class TestStudy(unittest.TestCase):
 
 
 class TestStudyOperations(unittest.TestCase):
+
     @classmethod
     def setUpClass(self):
-
         print "Connecting to DVN."
-        self.dvc = Connection(
-            username=DEFAULT_USERNAME,
-            password=DEFAULT_PASSWORD,
-            host=DEFAULT_HOST,
-            disable_ssl=True
-        )
+        self.dvc = Connection(DEFAULT_HOST, DEFAULT_TOKEN)
 
         print "Getting Dataverse"
-        self.dv = self.dvc.get_dataverses()[0]
-        self.dv.is_released
+        dataverses = self.dvc.get_dataverses()
+        if not dataverses:
+            raise utils.DataverseException(
+                'You must have a published Dataverse to run these tests.'
+            )
+
+        self.dv = dataverses[0]
+        if not self.dv.is_released:
+            raise utils.DataverseException(
+                'You must publish "{0}" to run these tests.'.format(self.dv.title)
+            )
 
         print "Removing any existing studies."
         studies = self.dv.get_studies()
@@ -114,9 +116,9 @@ class TestStudyOperations(unittest.TestCase):
         print 'Dataverse emptied.'
 
     def setUp(self):
-        #runs before each test method
+        # runs before each test method
 
-        #create a study for each test
+        # create a study for each test
         s = Study(**PICS_OF_CATS_STUDY)
         self.dv.add_study(s)
         doi = s.doi
@@ -138,17 +140,15 @@ class TestStudyOperations(unittest.TestCase):
         self.dv.delete_study(retrieved_study)
 
     def test_add_files(self):
-        self.s.add_files(['test_dvn.py', 'config.py'])
-        sleep(3) #wait for ingest
+        self.s.add_files(['test_dataverse.py', 'config.py'])
         actual_files = [f.name for f in self.s.get_files()]
 
-        self.assertIn('test_dvn.py', actual_files)
+        self.assertIn('test_dataverse.py', actual_files)
         self.assertIn('config.py', actual_files)
 
     def test_upload_file(self):
         self.s.upload_file('file.txt', 'This is a simple text file!')
         self.s.upload_file('file2.txt', 'This is the second simple text file!')
-        sleep(3) #wait for ingest
         actual_files = [f.name for f in self.s.get_files()]
 
         self.assertIn('file.txt', actual_files)
@@ -191,7 +191,8 @@ class TestStudyOperations(unittest.TestCase):
         self.dv.delete_study(atomStudy)
         self.assertEqual(atomStudy.get_state(refresh=True), 'DEACCESSIONED')
         self.assertEqual(len(self.dv.get_studies()), startingNumberOfStudies - 1)
-        
+
+    @unittest.skip('Released studies can no longer be deaccessioned via API')
     def test_release_study(self):
         self.assertTrue(self.s.get_state() == "DRAFT")
         self.s.release()
