@@ -1,7 +1,8 @@
 import requests
 
 from dataset import Dataset
-from utils import get_element, get_elements, DataverseException, sanitize
+from exceptions import DataverseError, InsufficientMetadataError, MethodNotAllowedError
+from utils import get_element, get_elements, sanitize
 
 
 class Dataverse(object):
@@ -49,16 +50,16 @@ class Dataverse(object):
         )
 
         if resp.status_code != 200:
-            raise DataverseException('The Dataverse could not be published.')
+            raise DataverseError('The Dataverse could not be published.')
 
     def add_dataset(self, dataset):
 
         if get_element(dataset._entry, 'title', 'dcterms') is None:
-            raise DataverseException('This dataset must have a title.')
+            raise InsufficientMetadataError('This dataset must have a title.')
         if get_element(dataset._entry, 'description', 'dcterms') is None:
-            raise DataverseException('This dataset must have a description.')
+            raise InsufficientMetadataError('This dataset must have a description.')
         if get_element(dataset._entry, 'creator', 'dcterms') is None:
-            raise DataverseException('This dataset must have an author.')
+            raise InsufficientMetadataError('This dataset must have an author.')
 
         resp = requests.post(
             self.collection.get('href'),
@@ -68,7 +69,7 @@ class Dataverse(object):
         )
 
         if resp.status_code != 201:
-            raise DataverseException('This dataset could not be added.')
+            raise DataverseError('This dataset could not be added.')
 
         dataset.dataverse = self
         dataset._refresh(receipt=resp.content)
@@ -76,15 +77,15 @@ class Dataverse(object):
     def delete_dataset(self, dataset):
 
         if dataset._state == 'DELETED' or dataset._state == 'DEACCESSIONED':
-            raise DataverseException('This dataset has already been deleted.')
+            return
 
         resp = requests.delete(
             dataset.edit_uri,
             auth=self.connection.auth,
         )
         if resp.status_code == 405:
-            raise DataverseException('Published studies can only be deleted '
-                'from the GUI. For more information, please refer to '
+            raise MethodNotAllowedError('Published studies can only be '
+                'deleted from the GUI. For more information, please refer to '
                 'https://github.com/IQSS/dataverse/issues/778')
 
         dataset._state = 'DEACCESSIONED'

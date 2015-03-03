@@ -4,8 +4,9 @@ import logging
 logging.basicConfig(level=logging.ERROR)
 
 # local modules
-from dataverse.dataset import Dataset
 from dataverse.connection import Connection
+from dataverse.dataset import Dataset
+from dataverse.exceptions import DataverseError
 from dataverse.settings import DEFAULT_TOKEN, DEFAULT_HOST
 from dataverse.test.config import PICS_OF_CATS_DATASET, ATOM_DATASET
 from dataverse import utils
@@ -97,8 +98,8 @@ class TestDatasetOperations(unittest.TestCase):
         print "Getting Dataverse"
         dataverses = self.dvc.get_dataverses()
         if not dataverses:
-            raise utils.DataverseException(
-                'You must have a published Dataverse to run these tests.'
+            raise DataverseError(
+                'You must have a Dataverse to run these tests.'
             )
 
         self.dv = dataverses[0]

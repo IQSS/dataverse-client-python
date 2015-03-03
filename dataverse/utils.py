@@ -6,10 +6,6 @@ import bleach
 from settings import SWORD_NAMESPACE, REPLACEMENT_DICT, UNIQUE_FIELDS
 
 
-class DataverseException(Exception):
-    pass
-
-
 def is_not_root_dataverse(collection):
     col_alias = collection.attrib['href'].split('/')[-1]
     # Root dataverse may be named differently per host

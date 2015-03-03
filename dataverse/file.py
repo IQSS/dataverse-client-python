@@ -1,6 +1,7 @@
 import urlparse
 
-from utils import DataverseException, get_element, sanitize
+from exceptions import InsufficientMetadataError
+from utils import get_element, sanitize
 
 
 class DataverseFile(object):
@@ -21,7 +22,7 @@ class DataverseFile(object):
             self.download_url = download_url
             self.id = download_url.split('=')[-1]
         else:
-            raise DataverseException(
+            raise InsufficientMetadataError(
                 'Files must have an edit media uri or download url.'
             )
 

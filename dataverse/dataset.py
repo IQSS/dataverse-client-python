@@ -5,12 +5,10 @@ from zipfile import ZipFile
 from lxml import etree
 import requests
 
+from exceptions import DataverseError, MethodNotAllowedError, NoContainerError
 from file import DataverseFile
 from settings import SWORD_BOOTSTRAP
-from utils import (
-    get_element, get_elements, DataverseException, get_files_in_path,
-    add_field,
-)
+from utils import get_element, get_elements, get_files_in_path, add_field
 
 
 class Dataset(object):
@@ -93,7 +91,7 @@ class Dataset(object):
         resp = requests.get(self.edit_uri, auth=self.connection.auth)
 
         if resp.status_code != 200:
-            raise DataverseException('Atom entry could not be retrieved.')
+            raise DataverseError('Atom entry could not be retrieved.')
 
         entry_string = resp.content
         self._entry = etree.XML(entry_string)
@@ -103,8 +101,8 @@ class Dataset(object):
         if not refresh and self._statement:
             return self._statement
 
-        if not self.connection:
-            raise DataverseException('This dataset has not been added to a Dataverse.')
+        if not self.dataverse:
+            raise NoContainerError('This dataset has not been added to a Dataverse.')
 
         if not self.statement_uri:
             # Try to find statement uri without a request to the server
@@ -127,7 +125,7 @@ class Dataset(object):
         resp = requests.get(self.statement_uri, auth=self.connection.auth)
 
         if resp.status_code != 200:
-            raise DataverseException('Statement could not be retrieved.')
+            raise DataverseError('Statement could not be retrieved.')
 
         self._statement = resp.content
         return self._statement
@@ -228,14 +226,14 @@ class Dataset(object):
         )
 
         if resp.status_code != 200:
-            raise DataverseException('The Dataverse could not be published.')
+            raise DataverseError('The Dataverse could not be published.')
 
         receipt = resp.content
         self._refresh(receipt=receipt)
     
     def delete_file(self, dataverse_file):
         if dataverse_file.is_published:
-            raise DataverseException(
+            raise MethodNotAllowedError(
                 'Published versions of files cannot be deleted.'
             )
 
@@ -245,7 +243,7 @@ class Dataset(object):
         )
 
         if resp.status_code != 204:
-            raise DataverseException('The file could not be deleted.')
+            raise DataverseError('The file could not be deleted.')
         
     def delete_all_files(self):
         for f in self.get_files():

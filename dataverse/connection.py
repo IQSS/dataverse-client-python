@@ -2,6 +2,7 @@ from lxml import etree
 import requests
 
 from dataverse import Dataverse
+from exceptions import DataverseError, UnauthorizedError
 from utils import get_elements, is_not_root_dataverse
 
 
@@ -32,13 +33,18 @@ class Connection(object):
 
     def connect(self):
         resp = requests.get(self.sd_uri, auth=self.auth)
-        self.status = resp.status_code
-        self.connected = True if self.status == 200 else False
+
+        if resp.status_code == 403:
+            raise UnauthorizedError('The credentials provided are invalid.')
+        elif resp.status_code != 200:
+            raise DataverseError('Could not connect to the Dataverse')
+
+        self.connected = True
         self.service_document = etree.XML(resp.content)
         
-    def get_dataverses(self, allow_root=False):
-        # Get latest dataverse information
-        self.connect()
+    def get_dataverses(self, refresh=False, allow_root=False):
+        if refresh:
+            self.connect()
 
         collections = get_elements(
             self.service_document[0],
