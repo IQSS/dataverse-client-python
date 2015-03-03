@@ -1,6 +1,6 @@
 import requests
 
-from study import Study
+from dataset import Dataset
 from utils import get_element, get_elements, DataverseException, sanitize
 
 
@@ -10,7 +10,7 @@ class Dataverse(object):
         self.collection = collection
 
     @property
-    def is_released(self):
+    def is_published(self):
 
         collection_info = requests.get(
             self.collection.get('href'),
@@ -38,7 +38,7 @@ class Dataverse(object):
             tag='title',
         ).text)
 
-    def release(self):
+    def publish(self):
         edit_uri = 'https://{0}/dvn/api/data-deposit/v1.1/swordv2/edit/dataverse/{1}'.format(
             self.connection.host, self.alias
         )
@@ -49,45 +49,45 @@ class Dataverse(object):
         )
 
         if resp.status_code != 200:
-            raise DataverseException('The Dataverse could not be released.')
+            raise DataverseException('The Dataverse could not be published.')
 
-    def add_study(self, study):
+    def add_dataset(self, dataset):
 
-        if get_element(study._entry, 'title', 'dcterms') is None:
-            raise DataverseException('This study must have a title.')
-        if get_element(study._entry, 'description', 'dcterms') is None:
-            raise DataverseException('This study must have a description.')
-        if get_element(study._entry, 'creator', 'dcterms') is None:
-            raise DataverseException('This study must have an author.')
+        if get_element(dataset._entry, 'title', 'dcterms') is None:
+            raise DataverseException('This dataset must have a title.')
+        if get_element(dataset._entry, 'description', 'dcterms') is None:
+            raise DataverseException('This dataset must have a description.')
+        if get_element(dataset._entry, 'creator', 'dcterms') is None:
+            raise DataverseException('This dataset must have an author.')
 
         resp = requests.post(
             self.collection.get('href'),
-            data=study.get_entry(),
+            data=dataset.get_entry(),
             headers={'Content-type': 'application/atom+xml'},
             auth=self.connection.auth,
         )
 
         if resp.status_code != 201:
-            raise DataverseException('This study could not be added.')
+            raise DataverseException('This dataset could not be added.')
 
-        study.dataverse = self
-        study._refresh(receipt=resp.content)
+        dataset.dataverse = self
+        dataset._refresh(receipt=resp.content)
         
-    def delete_study(self, study):
+    def delete_dataset(self, dataset):
 
-        if study._state == 'DELETED' or study._state == 'DEACCESSIONED':
-            raise DataverseException('This study has already been deleted.')
+        if dataset._state == 'DELETED' or dataset._state == 'DEACCESSIONED':
+            raise DataverseException('This dataset has already been deleted.')
 
         resp = requests.delete(
-            study.edit_uri,
+            dataset.edit_uri,
             auth=self.connection.auth,
         )
         if resp.status_code == 405:
-            raise DataverseException('Released studies can only be deleted '
+            raise DataverseException('Published studies can only be deleted '
                 'from the GUI. For more information, please refer to '
                 'https://github.com/IQSS/dataverse/issues/778')
 
-        study._state = 'DEACCESSIONED'
+        dataset._state = 'DEACCESSIONED'
         
     def get_studies(self):
 
@@ -97,13 +97,13 @@ class Dataverse(object):
         ).content
 
         entries = get_elements(collection_info, tag='entry')
-        return [Study.from_dataverse(entry, self) for entry in entries]
+        return [Dataset.from_dataverse(entry, self) for entry in entries]
 
-    def get_study_by_doi(self, doi):
+    def get_dataset_by_doi(self, doi):
         return next((s for s in self.get_studies() if s.doi == doi), None)
 
-    def get_study_by_title(self, title):
+    def get_dataset_by_title(self, title):
         return next((s for s in self.get_studies() if s.title == title), None)
 
-    def get_study_by_string_in_entry(self, string):
+    def get_dataset_by_string_in_entry(self, string):
         return next((s for s in self.get_studies() if string in s.get_entry()), None)

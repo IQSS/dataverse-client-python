@@ -1,6 +1,6 @@
 from connection import Connection
 from dataverse import Dataverse
-from study import Study
+from dataset import Dataset
 from file import DataverseFile
 
 from utils import DataverseException

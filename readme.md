@@ -1,7 +1,7 @@
 ## Dataverse API Client
 
 This is a library for writing Python applications that make use of Dataverse
-Sword APIs.  The code started as a "proof of concept" in the
+APIs v4.0.  The code started as a "proof of concept" in the
 [dvn/swordpoc](https://github.com/dvn/swordpoc) repo and the intent is to
 publish the python client on https://pypi.python.org.
 

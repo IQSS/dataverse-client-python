@@ -5,17 +5,17 @@ import logging
 logging.basicConfig(level=logging.ERROR)
 
 # local modules
-from dataverse.study import Study
+from dataverse.dataset import Dataset
 from dataverse.connection import Connection
 from dataverse.settings import DEFAULT_TOKEN, DEFAULT_HOST
-from dataverse.test.config import PICS_OF_CATS_STUDY, ATOM_STUDY
+from dataverse.test.config import PICS_OF_CATS_DATASET, ATOM_DATASET
 from dataverse import utils
 
 
 class TestUtils(unittest.TestCase):
 
     def test_get_element(self):
-        with open(ATOM_STUDY) as f:
+        with open(ATOM_DATASET) as f:
             entry = f.read()
         # One value
         title = utils.get_element(entry, 'title', 'dcterms').text
@@ -28,7 +28,7 @@ class TestUtils(unittest.TestCase):
         self.assertIsNone(nonsense)
 
     def test_get_elements(self):
-        with open(ATOM_STUDY) as f:
+        with open(ATOM_DATASET) as f:
             entry = f.read()
         # One value
         titles = utils.get_elements(entry, 'title', 'dcterms')
@@ -54,33 +54,33 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(formatted_term, '{http://purl.org/dc/terms/}identifier')
 
 
-class TestStudy(unittest.TestCase):
+class TestDataset(unittest.TestCase):
 
     def test_init(self):
-        study = Study(title='My Study', publisher='Mr. Pub Lisher')
+        dataset = Dataset(title='My Dataset', publisher='Mr. Pub Lisher')
         title = utils.get_element(
-            study._entry,
+            dataset._entry,
             namespace='dcterms',
             tag='title'
         ).text
         publisher = utils.get_element(
-            study._entry,
+            dataset._entry,
             namespace='dcterms',
             tag='publisher'
         ).text
-        self.assertEqual(title, 'My Study')
-        self.assertEqual(title, study.title)
+        self.assertEqual(title, 'My Dataset')
+        self.assertEqual(title, dataset.title)
         self.assertEqual(publisher, 'Mr. Pub Lisher')
 
     def test_init_from_xml(self):
-        study = Study.from_xml_file(ATOM_STUDY)
+        dataset = Dataset.from_xml_file(ATOM_DATASET)
         title = utils.get_element(
-            study.get_entry(),
+            dataset.get_entry(),
             namespace='dcterms',
             tag='title'
         ).text
         publisher = utils.get_element(
-            study.get_entry(),
+            dataset.get_entry(),
             namespace='dcterms',
             tag='rights'
         ).text
@@ -88,7 +88,7 @@ class TestStudy(unittest.TestCase):
         self.assertEqual(publisher, 'Creative Commons CC-BY 3.0 (unported) http://creativecommons.org/licenses/by/3.0/')
 
 
-class TestStudyOperations(unittest.TestCase):
+class TestDatasetOperations(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
@@ -103,41 +103,41 @@ class TestStudyOperations(unittest.TestCase):
             )
 
         self.dv = dataverses[0]
-        if not self.dv.is_released:
+        if not self.dv.is_published:
             raise utils.DataverseException(
                 'You must publish "{0}" to run these tests.'.format(self.dv.title)
             )
 
         print "Removing any existing studies."
         studies = self.dv.get_studies()
-        for study in studies :
-            if study.get_state() != 'DEACCESSIONED':
-                self.dv.delete_study(study)
+        for dataset in studies :
+            if dataset.get_state() != 'DEACCESSIONED':
+                self.dv.delete_dataset(dataset)
         print 'Dataverse emptied.'
 
     def setUp(self):
         # runs before each test method
 
-        # create a study for each test
-        s = Study(**PICS_OF_CATS_STUDY)
-        self.dv.add_study(s)
+        # create a dataset for each test
+        s = Dataset(**PICS_OF_CATS_DATASET)
+        self.dv.add_dataset(s)
         doi = s.doi
-        self.s = self.dv.get_study_by_doi(doi)
+        self.s = self.dv.get_dataset_by_doi(doi)
         self.assertEqual(doi, self.s.doi)
         return
 
     def tearDown(self):
         try:
-            self.dv.delete_study(self.s)
+            self.dv.delete_dataset(self.s)
         finally:
             return
 
-    def test_create_study_from_xml(self):
-        new_study = Study.from_xml_file(ATOM_STUDY)
-        self.dv.add_study(new_study)
-        retrieved_study = self.dv.get_study_by_title("Roasting at Home")
-        self.assertTrue(retrieved_study)
-        self.dv.delete_study(retrieved_study)
+    def test_create_dataset_from_xml(self):
+        new_dataset = Dataset.from_xml_file(ATOM_DATASET)
+        self.dv.add_dataset(new_dataset)
+        retrieved_dataset = self.dv.get_dataset_by_title("Roasting at Home")
+        self.assertTrue(retrieved_dataset)
+        self.dv.delete_dataset(retrieved_dataset)
 
     def test_add_files(self):
         self.s.add_files(['test_dataverse.py', 'config.py'])
@@ -160,7 +160,7 @@ class TestStudyOperations(unittest.TestCase):
         # in other methods so this test case is probably covered
         self.assertTrue(self.s.get_entry())
         
-    def test_display_study_statement(self):
+    def test_display_dataset_statement(self):
         # this just tests we can get an entry back, but does
         # not do anything with that xml yet. however, we do use get_statement
         # in other methods so this test case is probably covered
@@ -180,31 +180,31 @@ class TestStudyOperations(unittest.TestCase):
         cat_file = [f for f in files if f.name == "cat.jpg"]
         self.assertTrue(len(cat_file) == 0)
         
-    def test_delete_a_study(self):
-        xmlStudy = Study.from_xml_file(ATOM_STUDY)
-        self.dv.add_study(xmlStudy)
-        atomStudy = self.dv.get_study_by_title("Roasting at Home")
-        self.assertTrue(atomStudy)
+    def test_delete_a_dataset(self):
+        xmlDataset = Dataset.from_xml_file(ATOM_DATASET)
+        self.dv.add_dataset(xmlDataset)
+        atomDataset = self.dv.get_dataset_by_title("Roasting at Home")
+        self.assertTrue(atomDataset)
 
         startingNumberOfStudies = len(self.dv.get_studies())
         self.assertTrue(startingNumberOfStudies > 0)
-        self.dv.delete_study(atomStudy)
-        self.assertEqual(atomStudy.get_state(refresh=True), 'DEACCESSIONED')
+        self.dv.delete_dataset(atomDataset)
+        self.assertEqual(atomDataset.get_state(refresh=True), 'DEACCESSIONED')
         self.assertEqual(len(self.dv.get_studies()), startingNumberOfStudies - 1)
 
-    @unittest.skip('Released studies can no longer be deaccessioned via API')
-    def test_release_study(self):
+    @unittest.skip('Published studies can no longer be deaccessioned via API')
+    def test_publish_dataset(self):
         self.assertTrue(self.s.get_state() == "DRAFT")
-        self.s.release()
-        self.assertTrue(self.s.get_state() == "RELEASED")
-        self.dv.delete_study(self.s)
+        self.s.publish()
+        self.assertTrue(self.s.get_state() == "PUBLISHED")
+        self.dv.delete_dataset(self.s)
         self.assertTrue(self.s.get_state(refresh=True) == "DEACCESSIONED")
     
-    def test_dataverse_released(self):
-        self.assertTrue(self.dv.is_released)
+    def test_dataverse_published(self):
+        self.assertTrue(self.dv.is_published)
     
 if __name__ == "__main__":
     __file__ = sys.argv[0]
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestStudyOperations)
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestDatasetOperations)
     unittest.TextTestRunner(verbosity=2).run(suite)
 

@@ -13,7 +13,7 @@ from utils import (
 )
 
 
-class Study(object):
+class Dataset(object):
     def __init__(self, entry=SWORD_BOOTSTRAP, dataverse=None, edit_uri=None,
                  edit_media_uri=None, statement_uri=None, **kwargs):
         """
@@ -104,7 +104,7 @@ class Study(object):
             return self._statement
 
         if not self.connection:
-            raise DataverseException('This study has not been added to a Dataverse.')
+            raise DataverseException('This dataset has not been added to a Dataverse.')
 
         if not self.statement_uri:
             # Try to find statement uri without a request to the server
@@ -144,31 +144,31 @@ class Study(object):
         ).text
         return self._state
 
-    def get_file(self, file_name, released=False):
+    def get_file(self, file_name, published=False):
 
-        # Search released study if specified; otherwise, search draft
-        files = self.get_released_files() if released else self.get_files()
+        # Search published dataset if specified; otherwise, search draft
+        files = self.get_published_files() if published else self.get_files()
         return next((f for f in files if f.name == file_name), None)
 
-    def get_file_by_id(self, file_id, released=False):
+    def get_file_by_id(self, file_id, published=False):
 
-        # Search released study if specified; otherwise, search draft
-        files = self.get_released_files() if released else self.get_files()
+        # Search published dataset if specified; otherwise, search draft
+        files = self.get_published_files() if published else self.get_files()
         return next((f for f in files if f.id == file_id), None)
 
-    def get_files(self, released=False, refresh=True):
-        if released:
-            return self.get_released_files()
+    def get_files(self, published=False, refresh=True):
+        if published:
+            return self.get_published_files()
 
         return [
             DataverseFile.from_statement(resource, self)
             for resource in get_elements(self.get_statement(refresh), 'entry')
         ]
 
-    def get_released_files(self):
+    def get_published_files(self):
         """
         Uses data sharing API to retrieve a list of files from the most
-        recently released version of the study
+        recently published version of the dataset
         """
         metadata_url = 'https://{0}/dvn/api/metadata/{1}'.format(
             self.connection.host, self.doi
@@ -220,7 +220,7 @@ class Study(object):
 
         self._refresh()
 
-    def release(self):
+    def publish(self):
         resp = requests.post(
             self.edit_uri,
             headers={'In-Progress': 'false', 'Content-Length': 0},
@@ -228,15 +228,15 @@ class Study(object):
         )
 
         if resp.status_code != 200:
-            raise DataverseException('The Dataverse could not be released.')
+            raise DataverseException('The Dataverse could not be published.')
 
         receipt = resp.content
         self._refresh(receipt=receipt)
     
     def delete_file(self, dataverse_file):
-        if dataverse_file.is_released:
+        if dataverse_file.is_published:
             raise DataverseException(
-                'Released versions of files cannot be deleted.'
+                'Published versions of files cannot be deleted.'
             )
 
         resp = requests.delete(
@@ -261,7 +261,7 @@ class Study(object):
     #     )
     #     self._refresh(deposit_receipt=depositReceipt)
 
-    # if we perform a server operation, we should refresh the study object
+    # if we perform a server operation, we should refresh the dataset object
     def _refresh(self, receipt=None):
         if receipt:
             self.edit_uri = get_element(
