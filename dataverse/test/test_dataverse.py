@@ -1,4 +1,3 @@
-import sys
 import unittest
 
 import logging
@@ -103,10 +102,6 @@ class TestDatasetOperations(unittest.TestCase):
             )
 
         self.dv = dataverses[0]
-        if not self.dv.is_published:
-            raise utils.DataverseException(
-                'You must publish "{0}" to run these tests.'.format(self.dv.title)
-            )
 
         print "Removing any existing studies."
         studies = self.dv.get_studies()
@@ -199,12 +194,8 @@ class TestDatasetOperations(unittest.TestCase):
         self.assertTrue(self.s.get_state() == "PUBLISHED")
         self.dv.delete_dataset(self.s)
         self.assertTrue(self.s.get_state(refresh=True) == "DEACCESSIONED")
+
     
-    def test_dataverse_published(self):
-        self.assertTrue(self.dv.is_published)
-    
-if __name__ == "__main__":
-    __file__ = sys.argv[0]
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestDatasetOperations)
-    unittest.TextTestRunner(verbosity=2).run(suite)
+if __name__ == '__main__':
+    unittest.main()
 

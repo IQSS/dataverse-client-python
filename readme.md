@@ -28,7 +28,10 @@ Do not commit this file.
 
 ## Testing
 
-Not all tests are functional. 
-
-In order to run any tests, you must first create and publish a Dataverse on the
+In order to run any tests, you must first create a Dataverse on the
 host you wish to test. Do not run tests on the production server.
+
+To run tests
+
+    $ cd dataverse/test
+    $ python -m unittest test_dataverse

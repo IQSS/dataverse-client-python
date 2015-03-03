@@ -10,6 +10,12 @@ class DataverseException(Exception):
     pass
 
 
+def is_not_root_dataverse(collection):
+    col_alias = collection.attrib['href'].split('/')[-1]
+    # Root dataverse may be named differently per host
+    return col_alias != 'root' and col_alias != 'harvard'
+
+
 # factor out xpath operations so we don't have to look at its ugliness
 def get_element(root, tag='*', namespace=None, attribute=None, attribute_value=None):
     elements = get_elements(root, tag, namespace, attribute, attribute_value)

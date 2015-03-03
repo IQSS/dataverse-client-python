@@ -2,7 +2,7 @@ from lxml import etree
 import requests
 
 from dataverse import Dataverse
-from utils import get_elements
+from utils import get_elements, is_not_root_dataverse
 
 
 class Connection(object):
@@ -36,21 +36,19 @@ class Connection(object):
         self.connected = True if self.status == 200 else False
         self.service_document = etree.XML(resp.content)
         
-    def get_dataverses(self):
+    def get_dataverses(self, allow_root=False):
         # Get latest dataverse information
         self.connect()
 
-        # Dataverse 4.0 beta currently returns collection for "Harvard" DV,
-        # which the user may not have permissions on. Could cause problems.        
         collections = get_elements(
             self.service_document[0],
             tag="collection",
         )
-        # removes the Harvard dataverse; this is gross
-        # also removes the root dataverse (which users do not have read permission on)
-        def is_not_harvard_or_root(collection):
-            return (collection.attrib['href'].split('/')[-1] != 'harvard') and (collection.attrib['href'].split('/')[-1] != 'root')
-        collections = filter(is_not_harvard_or_root, collections)
+
+        # Remove root Dataverses, which may cause permission issues
+        # See https://github.com/IQSS/dataverse/issues/1070
+        if not allow_root:
+            collections = filter(is_not_root_dataverse, collections)
         
         return [Dataverse(self, col) for col in collections]
 
