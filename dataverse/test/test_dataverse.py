@@ -104,9 +104,9 @@ class TestDatasetOperations(unittest.TestCase):
 
         self.dv = dataverses[0]
 
-        print "Removing any existing studies."
-        studies = self.dv.get_studies()
-        for dataset in studies :
+        print "Removing any existing datasets."
+        datasets = self.dv.get_datasets()
+        for dataset in datasets:
             if dataset.get_state() != 'DEACCESSIONED':
                 self.dv.delete_dataset(dataset)
         print 'Dataverse emptied.'
@@ -182,13 +182,13 @@ class TestDatasetOperations(unittest.TestCase):
         atomDataset = self.dv.get_dataset_by_title("Roasting at Home")
         self.assertTrue(atomDataset)
 
-        startingNumberOfStudies = len(self.dv.get_studies())
-        self.assertTrue(startingNumberOfStudies > 0)
+        num_datasets = len(self.dv.get_datasets())
+        self.assertTrue(num_datasets > 0)
         self.dv.delete_dataset(atomDataset)
         self.assertEqual(atomDataset.get_state(refresh=True), 'DEACCESSIONED')
-        self.assertEqual(len(self.dv.get_studies()), startingNumberOfStudies - 1)
+        self.assertEqual(len(self.dv.get_datasets()), num_datasets - 1)
 
-    @unittest.skip('Published studies can no longer be deaccessioned via API')
+    @unittest.skip('Published datasets can no longer be deaccessioned via API')
     def test_publish_dataset(self):
         self.assertTrue(self.s.get_state() == "DRAFT")
         self.s.publish()

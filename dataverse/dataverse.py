@@ -82,13 +82,13 @@ class Dataverse(object):
             auth=self.connection.auth,
         )
         if resp.status_code == 405:
-            raise MethodNotAllowedError('Published studies can only be '
+            raise MethodNotAllowedError('Published datasets can only be '
                 'deleted from the GUI. For more information, please refer to '
                 'https://github.com/IQSS/dataverse/issues/778')
 
         dataset._state = 'DEACCESSIONED'
         
-    def get_studies(self):
+    def get_datasets(self):
 
         collection_info = requests.get(
             self.collection.get('href'),
@@ -99,10 +99,10 @@ class Dataverse(object):
         return [Dataset.from_dataverse(entry, self) for entry in entries]
 
     def get_dataset_by_doi(self, doi):
-        return next((s for s in self.get_studies() if s.doi == doi), None)
+        return next((s for s in self.get_datasets() if s.doi == doi), None)
 
     def get_dataset_by_title(self, title):
-        return next((s for s in self.get_studies() if s.title == title), None)
+        return next((s for s in self.get_datasets() if s.title == title), None)
 
     def get_dataset_by_string_in_entry(self, string):
-        return next((s for s in self.get_studies() if string in s.get_entry()), None)
+        return next((s for s in self.get_datasets() if string in s.get_entry()), None)
