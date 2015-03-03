@@ -26,20 +26,6 @@ class DataverseFile(object):
                 'Files must have an edit media uri or download url.'
             )
 
-    def __repr__(self):
-        return """
-    DATAVERSE FILE:
-    Name: {0}
-    Id: {1}
-    Download URL: {2}
-    Status: {3}
-    """.format(
-            self.name,
-            self.id,
-            self.download_url,
-            'PUBLISHED' if self.is_published else 'DRAFT',
-        )
-
     @classmethod
     def from_statement(cls, element, dataset):
         edit_media_uri = get_element(element, 'content').get('src')

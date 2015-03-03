@@ -15,11 +15,8 @@ class Connection(object):
         self.password = password
         self.host = host
         self.sd_uri = "https://{host}/dvn/api/data-deposit/v1.1/swordv2/service-document".format(host=self.host)
-        
-        # Connection Status and SWORD Properties
-        self.status = None
-        self.connected = False
         self.service_document = None
+        self.connected = False
         
         self.connect()
 
@@ -39,8 +36,8 @@ class Connection(object):
         elif resp.status_code != 200:
             raise DataverseError('Could not connect to the Dataverse')
 
-        self.connected = True
         self.service_document = etree.XML(resp.content)
+        self.connected = True
         
     def get_dataverses(self, refresh=False, allow_root=False):
         if refresh:

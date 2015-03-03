@@ -53,7 +53,6 @@ class Dataverse(object):
             raise DataverseError('The Dataverse could not be published.')
 
     def add_dataset(self, dataset):
-
         if get_element(dataset._entry, 'title', 'dcterms') is None:
             raise InsufficientMetadataError('This dataset must have a title.')
         if get_element(dataset._entry, 'description', 'dcterms') is None:
@@ -75,7 +74,6 @@ class Dataverse(object):
         dataset._refresh(receipt=resp.content)
         
     def delete_dataset(self, dataset):
-
         if dataset._state == 'DELETED' or dataset._state == 'DEACCESSIONED':
             return
 

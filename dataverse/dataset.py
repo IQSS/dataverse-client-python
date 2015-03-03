@@ -143,13 +143,11 @@ class Dataset(object):
         return self._state
 
     def get_file(self, file_name, published=False):
-
         # Search published dataset if specified; otherwise, search draft
         files = self.get_published_files() if published else self.get_files()
         return next((f for f in files if f.name == file_name), None)
 
     def get_file_by_id(self, file_id, published=False):
-
         # Search published dataset if specified; otherwise, search draft
         files = self.get_published_files() if published else self.get_files()
         return next((f for f in files if f.id == file_id), None)
@@ -158,22 +156,16 @@ class Dataset(object):
         if published:
             return self.get_published_files()
 
-        return [
-            DataverseFile.from_statement(resource, self)
-            for resource in get_elements(self.get_statement(refresh), 'entry')
-        ]
+        elements = get_elements(self.get_statement(refresh), 'entry')
+        return [DataverseFile.from_statement(element, self)
+                for element in elements]
 
     def get_published_files(self):
-        """
-        Uses data sharing API to retrieve a list of files from the most
-        recently published version of the dataset
-        """
         metadata_url = 'https://{0}/dvn/api/metadata/{1}'.format(
             self.connection.host, self.doi
         )
         xml = requests.get(metadata_url, auth=self.connection.auth).content
         elements = get_elements(xml, tag='otherMat')
-
         return [DataverseFile.from_metadata(element, self)
                 for element in elements]
 
