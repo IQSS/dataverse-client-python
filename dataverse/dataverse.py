@@ -1,7 +1,9 @@
 import requests
 
 from dataset import Dataset
-from exceptions import DataverseError, InsufficientMetadataError, MethodNotAllowedError
+from exceptions import (
+    InsufficientMetadataError, MethodNotAllowedError, OperationFailedError,
+)
 from utils import get_element, get_elements, sanitize
 
 
@@ -50,7 +52,7 @@ class Dataverse(object):
         )
 
         if resp.status_code != 200:
-            raise DataverseError('The Dataverse could not be published.')
+            raise OperationFailedError('The Dataverse could not be published.')
 
     def add_dataset(self, dataset):
         if get_element(dataset._entry, 'title', 'dcterms') is None:
@@ -68,7 +70,7 @@ class Dataverse(object):
         )
 
         if resp.status_code != 201:
-            raise DataverseError('This dataset could not be added.')
+            raise OperationFailedError('This dataset could not be added.')
 
         dataset.dataverse = self
         dataset._refresh(receipt=resp.content)

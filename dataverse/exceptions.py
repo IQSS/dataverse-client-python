@@ -21,3 +21,13 @@ class MethodNotAllowedError(DataverseError):
 class NoContainerError(DataverseError):
     """Raised if a dataset attempts to access the server before it is added to a Dataverse"""
     pass
+
+
+class ConnectionError(DataverseError):
+    """Raised when connection fails for an unknown reason"""
+    pass
+
+
+class OperationFailedError(DataverseError):
+    """Raised when an operation fails for an unknown reason"""
+    pass

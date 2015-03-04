@@ -5,7 +5,10 @@ from zipfile import ZipFile
 from lxml import etree
 import requests
 
-from exceptions import DataverseError, MethodNotAllowedError, NoContainerError
+from exceptions import (
+    MethodNotAllowedError, NoContainerError, OperationFailedError,
+    ConnectionError,
+)
 from file import DataverseFile
 from settings import SWORD_BOOTSTRAP
 from utils import get_element, get_elements, get_files_in_path, add_field
@@ -91,7 +94,7 @@ class Dataset(object):
         resp = requests.get(self.edit_uri, auth=self.connection.auth)
 
         if resp.status_code != 200:
-            raise DataverseError('Atom entry could not be retrieved.')
+            raise ConnectionError('Atom entry could not be retrieved.')
 
         entry_string = resp.content
         self._entry = etree.XML(entry_string)
@@ -125,7 +128,7 @@ class Dataset(object):
         resp = requests.get(self.statement_uri, auth=self.connection.auth)
 
         if resp.status_code != 200:
-            raise DataverseError('Statement could not be retrieved.')
+            raise ConnectionError('Statement could not be retrieved.')
 
         self._statement = resp.content
         return self._statement
@@ -218,7 +221,7 @@ class Dataset(object):
         )
 
         if resp.status_code != 200:
-            raise DataverseError('The Dataverse could not be published.')
+            raise OperationFailedError('The Dataverse could not be published.')
 
         receipt = resp.content
         self._refresh(receipt=receipt)
@@ -235,7 +238,7 @@ class Dataset(object):
         )
 
         if resp.status_code != 204:
-            raise DataverseError('The file could not be deleted.')
+            raise OperationFailedError('The file could not be deleted.')
         
     def delete_all_files(self):
         for f in self.get_files():
