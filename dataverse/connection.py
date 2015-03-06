@@ -2,8 +2,8 @@ from lxml import etree
 import requests
 
 from dataverse import Dataverse
-from exceptions import DataverseError, UnauthorizedError, ConnectionError
-from utils import get_elements, is_not_root_dataverse
+from exceptions import UnauthorizedError, ConnectionError
+from utils import get_elements
 
 
 class Connection(object):
@@ -47,11 +47,6 @@ class Connection(object):
             self.service_document[0],
             tag="collection",
         )
-
-        # Remove root Dataverses, which may cause permission issues
-        # See https://github.com/IQSS/dataverse/issues/1070
-        if not allow_root:
-            collections = filter(is_not_root_dataverse, collections)
         
         return [Dataverse(self, col) for col in collections]
 
