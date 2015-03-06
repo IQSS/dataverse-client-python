@@ -39,7 +39,7 @@ class Connection(object):
         self.service_document = etree.XML(resp.content)
         self.connected = True
         
-    def get_dataverses(self, refresh=False, allow_root=False):
+    def get_dataverses(self, refresh=False):
         if refresh:
             self.connect()
 
@@ -50,6 +50,6 @@ class Connection(object):
         
         return [Dataverse(self, col) for col in collections]
 
-    def get_dataverse(self, alias):
-        return next((dataverse for dataverse in self.get_dataverses()
+    def get_dataverse(self, alias, refresh=False):
+        return next((dataverse for dataverse in self.get_dataverses(refresh)
                      if dataverse.alias == alias), None)
