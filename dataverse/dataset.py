@@ -196,6 +196,8 @@ class Dataset(object):
             zip_file = ZipFile(s, 'w')
             zip_file.writestr(filename, content)
             zip_file.close()
+            # filename, content should reflect zipped file
+            filename = 'temp.zip'
             content = s.getvalue()
 
         headers = {
