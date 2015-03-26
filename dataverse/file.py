@@ -20,7 +20,7 @@ class DataverseFile(object):
         elif download_url:
             self.is_published = True
             self.download_url = download_url
-            self.id = download_url.split('=')[-1]
+            self.id = download_url.rsplit('=', 1)[-1]
         else:
             raise InsufficientMetadataError(
                 'Files must have an edit media uri or download url.'
@@ -29,7 +29,7 @@ class DataverseFile(object):
     @classmethod
     def from_statement(cls, element, dataset):
         edit_media_uri = get_element(element, 'content').get('src')
-        name = edit_media_uri.rsplit("/")[-1]
+        name = edit_media_uri.rsplit("/", 1)[-1]
         return cls(name, dataset, edit_media_uri=edit_media_uri)
 
     @classmethod

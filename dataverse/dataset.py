@@ -146,30 +146,18 @@ class Dataset(object):
         return self._state
 
     def get_file(self, file_name, published=False):
-        # Search published dataset if specified; otherwise, search draft
-        files = self.get_published_files() if published else self.get_files()
+        files = self.get_files(published)
         return next((f for f in files if f.name == file_name), None)
 
     def get_file_by_id(self, file_id, published=False):
-        # Search published dataset if specified; otherwise, search draft
-        files = self.get_published_files() if published else self.get_files()
+        files = self.get_files(published)
         return next((f for f in files if f.id == file_id), None)
 
     def get_files(self, published=False, refresh=True):
-        if published:
-            return self.get_published_files()
-
-        elements = get_elements(self.get_statement(refresh), 'entry')
+        if self.get_state(refresh) == 'DRAFT' and published:
+            return []
+        elements = get_elements(self.get_statement(), 'entry')
         return [DataverseFile.from_statement(element, self)
-                for element in elements]
-
-    def get_published_files(self):
-        metadata_url = 'https://{0}/dvn/api/metadata/{1}'.format(
-            self.connection.host, self.doi
-        )
-        xml = requests.get(metadata_url, auth=self.connection.auth).content
-        elements = get_elements(xml, tag='otherMat')
-        return [DataverseFile.from_metadata(element, self)
                 for element in elements]
 
     def add_file(self, filepath):
