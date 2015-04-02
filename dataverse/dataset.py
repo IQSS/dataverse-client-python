@@ -7,7 +7,7 @@ import requests
 
 from exceptions import (
     MethodNotAllowedError, NoContainerError, OperationFailedError,
-    ConnectionError,
+    ConnectionError, MetadataNotFoundError
 )
 from file import DataverseFile
 from settings import SWORD_BOOTSTRAP
@@ -22,14 +22,16 @@ class Dataset(object):
         This can be specified in the atom entry or as kwargs
         """
         self.dataverse = dataverse
-        self._statement = None
-        self._state = None
 
         self.edit_uri = edit_uri
         self.edit_media_uri = edit_media_uri
         self.statement_uri = statement_uri
 
         self._entry = etree.XML(entry) if isinstance(entry, str) else entry
+        self._statement = None
+        self._state = None
+        self._json = None
+        self._id = None
 
         # Updates sword entry from keyword arguments
         for key, value in kwargs.iteritems():
@@ -72,8 +74,49 @@ class Dataset(object):
 
     @property
     def doi(self):
+        if not self.dataverse:
+            raise NoContainerError('This dataset has not been added to a Dataverse.')
+
         # Note: This depends strongly on URL structure, and may break easily
-        return self.edit_media_uri.rsplit("/study/")[-1]
+        return self.edit_media_uri.rsplit("/study/", 1)[-1]
+
+    @property
+    def id(self):
+        if self._id:
+            return self._id
+
+        if not self.dataverse:
+            raise NoContainerError('This dataset has not been added to a Dataverse.')
+
+        for dataset in self.dataverse.get_contents(refresh=True):
+            doi = '{0}:{1}/{2}'.format(
+                dataset['protocol'],
+                dataset['authority'],
+                dataset['identifier'],
+            )
+            if doi == self.doi:
+                self._id = dataset['id']
+                return self._id
+
+        raise MetadataNotFoundError('The dataset ID could not be found.')
+
+    def get_contents(self, refresh=False):
+        if not refresh and self._contents_json:
+            return self._contents_json
+
+        content_uri = 'https://{0}/api/dataverses/{1}/contents'.format(
+            self.connection.host, self.alias
+        )
+        resp = requests.get(
+            content_uri,
+            params={'key': self.connection.token}
+        )
+
+        if resp.status_code != 200:
+            raise ConnectionError('Atom entry could not be retrieved.')
+
+        self._contents_json = resp.json()
+        return self._contents_json
 
     @property
     def citation(self):
@@ -145,20 +188,47 @@ class Dataset(object):
         ).text
         return self._state
 
-    def get_file(self, file_name, published=False):
-        files = self.get_files(published)
+    def get_json(self, refresh=False):
+        if not refresh and self._json:
+            return self._json
+
+        if not self.dataverse:
+            raise NoContainerError('This dataset has not been added to a Dataverse.')
+
+        # TODO: Allow specification of other versions
+        json_url = 'https://{0}/api/datasets/{1}/versions/:latest-published'.format(
+            self.connection.host,
+            self.id
+        )
+
+        resp = requests.get(json_url, params={'key': self.connection.token})
+
+        if resp.status_code != 200:
+            raise ConnectionError('JSON metadata could not be retrieved.')
+
+        self._json = resp.json()['data']
+        return self._json
+
+    def get_file(self, file_name, published=False, refresh=True):
+        files = self.get_files(published, refresh)
         return next((f for f in files if f.name == file_name), None)
 
-    def get_file_by_id(self, file_id, published=False):
-        files = self.get_files(published)
+    def get_file_by_id(self, file_id, published=False, refresh=True):
+        files = self.get_files(published, refresh)
         return next((f for f in files if f.id == file_id), None)
 
     def get_files(self, published=False, refresh=True):
-        if self.get_state(refresh) == 'DRAFT' and published:
-            return []
-        elements = get_elements(self.get_statement(), 'entry')
-        return [DataverseFile.from_statement(element, self)
+        if published:
+            return self.get_published_files(refresh)
+
+        # TODO: Should the native API be preferred?
+        elements = get_elements(self.get_statement(refresh), 'entry')
+        return [DataverseFile.from_statement(self, element)
                 for element in elements]
+
+    def get_published_files(self, refresh=True):
+        return [DataverseFile.from_json(self, file_json)
+                for file_json in self.get_json(refresh)['files']]
 
     def add_file(self, filepath):
         self.add_files([filepath])
@@ -235,6 +305,7 @@ class Dataset(object):
             self.delete_file(f)
 
     # TODO: DANGEROUS! Will delete all unspecified fields! Deposit receipts only give SOME of the fields
+    # Can potentially be replaced with native API functionality
     # def update_metadata(self):
     #     depositReceipt = self.hostDataverse.connection.sword.update(
     #         dr=self.lastDepositReceipt,

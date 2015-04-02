@@ -3,6 +3,7 @@ import requests
 from dataset import Dataset
 from exceptions import (
     InsufficientMetadataError, MethodNotAllowedError, OperationFailedError,
+    ConnectionError
 )
 from utils import get_element, get_elements, sanitize
 
@@ -11,6 +12,7 @@ class Dataverse(object):
     def __init__(self, connection, collection):
         self.connection = connection
         self.collection = collection
+        self._contents_json = None
 
     @property
     def is_published(self):
@@ -40,6 +42,24 @@ class Dataverse(object):
             namespace='atom',
             tag='title',
         ).text)
+
+    def get_contents(self, refresh=False):
+        if not refresh and self._contents_json:
+            return self._contents_json
+
+        content_uri = 'https://{0}/api/dataverses/{1}/contents'.format(
+            self.connection.host, self.alias
+        )
+        resp = requests.get(
+            content_uri,
+            params={'key': self.connection.token}
+        )
+
+        if resp.status_code != 200:
+            raise ConnectionError('Atom entry could not be retrieved.')
+
+        self._contents_json = resp.json()['data']
+        return self._contents_json
 
     def publish(self):
         edit_uri = 'https://{0}/dvn/api/data-deposit/v1.1/swordv2/edit/dataverse/{1}'.format(

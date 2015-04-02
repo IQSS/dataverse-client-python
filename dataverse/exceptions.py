@@ -31,3 +31,7 @@ class ConnectionError(DataverseError):
 class OperationFailedError(DataverseError):
     """Raised when an operation fails for an unknown reason"""
     pass
+
+class MetadataNotFoundError(DataverseError):
+    """Raised when metadata cannot be found for an unknown reason"""
+    pass
