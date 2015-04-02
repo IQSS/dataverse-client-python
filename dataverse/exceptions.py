@@ -32,6 +32,17 @@ class OperationFailedError(DataverseError):
     """Raised when an operation fails for an unknown reason"""
     pass
 
+
 class MetadataNotFoundError(DataverseError):
     """Raised when metadata cannot be found for an unknown reason"""
+    pass
+
+
+class UnpublishedDataverseError(DataverseError):
+    """Raised when a request requires that a Dataverse first be published"""
+    pass
+
+
+class UnpublishedDatasetError(DataverseError):
+    """Raised when a request requires that a dataset first be published"""
     pass

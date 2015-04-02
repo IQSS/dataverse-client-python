@@ -7,7 +7,7 @@ import requests
 
 from exceptions import (
     MethodNotAllowedError, NoContainerError, OperationFailedError,
-    ConnectionError, MetadataNotFoundError
+    ConnectionError, MetadataNotFoundError, UnpublishedDatasetError
 )
 from file import DataverseFile
 from settings import SWORD_BOOTSTRAP
@@ -203,7 +203,9 @@ class Dataset(object):
 
         resp = requests.get(json_url, params={'key': self.connection.token})
 
-        if resp.status_code != 200:
+        if resp.status_code == 404:
+            raise UnpublishedDatasetError('JSON metadata cannot be retried for an unpublished dataset.')
+        elif resp.status_code != 200:
             raise ConnectionError('JSON metadata could not be retrieved.')
 
         self._json = resp.json()['data']
@@ -227,8 +229,11 @@ class Dataset(object):
                 for element in elements]
 
     def get_published_files(self, refresh=True):
-        return [DataverseFile.from_json(self, file_json)
-                for file_json in self.get_json(refresh)['files']]
+        try:
+            return [DataverseFile.from_json(self, file_json)
+                    for file_json in self.get_json(refresh)['files']]
+        except UnpublishedDatasetError:
+            return []
 
     def add_file(self, filepath):
         self.add_files([filepath])
