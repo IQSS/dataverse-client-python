@@ -6,7 +6,7 @@ from lxml import etree
 import requests
 
 from exceptions import (
-    MethodNotAllowedError, NoContainerError, OperationFailedError,
+    NoContainerError, OperationFailedError,
     ConnectionError, MetadataNotFoundError, VersionJsonNotFoundError
 )
 from file import DataverseFile

@@ -2,7 +2,7 @@ from utils import sanitize
 
 
 class DataverseFile(object):
-    def __init__(self, dataset, name, file_id=None, edit_media_uri=None):
+    def __init__(self, dataset, name, file_id=None):
         self.dataset = dataset
         self.name = sanitize(name)
         self.id = file_id

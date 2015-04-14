@@ -8,11 +8,9 @@ from utils import get_elements
 
 class Connection(object):
 
-    def __init__(self, host, token=None, username=None, password=None):
+    def __init__(self, host, token):
         # Connection Properties
         self.token = token
-        self.username = username
-        self.password = password
         self.host = host
         self.sd_uri = "https://{host}/dvn/api/data-deposit/v1.1/swordv2/service-document".format(host=self.host)
         self.service_document = None
@@ -22,11 +20,7 @@ class Connection(object):
 
     @property
     def auth(self):
-        return (self.token, None) if self.token else (self.username, self.password)
-
-    @property
-    def has_api_key(self):
-        return True if self.token else False
+        return self.token, None
 
     def connect(self):
         resp = requests.get(self.sd_uri, auth=self.auth)

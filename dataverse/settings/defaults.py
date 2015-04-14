@@ -1,5 +1,5 @@
-DEFAULT_HOST = "dataverse-demo.iq.harvard.edu"
-DEFAULT_TOKEN = "changeme"
+TEST_HOST = "dataverse-demo.iq.harvard.edu"
+TEST_TOKEN = "changeme"
 
 EXAMPLE_DICT = {
     "title": "ExampleTitle",

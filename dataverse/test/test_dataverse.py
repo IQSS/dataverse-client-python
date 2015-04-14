@@ -7,7 +7,7 @@ logging.basicConfig(level=logging.ERROR)
 from dataverse.connection import Connection
 from dataverse.dataset import Dataset
 from dataverse.exceptions import DataverseError
-from dataverse.settings import DEFAULT_TOKEN, DEFAULT_HOST
+from dataverse.settings import TEST_HOST, TEST_TOKEN
 from dataverse.test.config import PICS_OF_CATS_DATASET, ATOM_DATASET
 from dataverse import utils
 
@@ -93,7 +93,7 @@ class TestDatasetOperations(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         print "Connecting to DVN."
-        self.dvc = Connection(DEFAULT_HOST, DEFAULT_TOKEN)
+        self.dvc = Connection(TEST_HOST, TEST_TOKEN)
 
         print "Getting Dataverse"
         dataverses = self.dvc.get_dataverses()

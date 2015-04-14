@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
-import re
-import sys
 from setuptools import setup, find_packages
 import unittest
-from setuptools.command.test import test as TestCommand
 
 
 REQUIRES = [
@@ -24,7 +21,7 @@ def read(fname):
 
 setup(
     name='dataverse',
-    version='0.1',
+    version='0.1.1',
     description='Python client for Dataverse version 3.X',
     long_description=read("readme.md"),
     author='Dataverse',
