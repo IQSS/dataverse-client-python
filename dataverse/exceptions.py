@@ -43,6 +43,6 @@ class UnpublishedDataverseError(DataverseError):
     pass
 
 
-class UnpublishedDatasetError(DataverseError):
-    """Raised when a request requires that a dataset first be published"""
+class VersionJsonNotFoundError(DataverseError):
+    """Raised when requested json data for a version is not found"""
     pass
