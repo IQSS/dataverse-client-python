@@ -7,11 +7,11 @@ import requests
 
 from exceptions import (
     MethodNotAllowedError, NoContainerError, OperationFailedError,
-    ConnectionError, MetadataNotFoundError, UnpublishedDatasetError
+    ConnectionError, MetadataNotFoundError, VersionJsonNotFoundError
 )
 from file import DataverseFile
 from settings import SWORD_BOOTSTRAP
-from utils import get_element, get_elements, get_files_in_path, add_field
+from utils import get_element, get_files_in_path, add_field
 
 
 class Dataset(object):
@@ -30,7 +30,7 @@ class Dataset(object):
         self._entry = etree.XML(entry) if isinstance(entry, str) else entry
         self._statement = None
         self._state = None
-        self._json = None
+        self._json = {}
         self._id = None
 
         # Updates sword entry from keyword arguments
@@ -99,24 +99,6 @@ class Dataset(object):
                 return self._id
 
         raise MetadataNotFoundError('The dataset ID could not be found.')
-
-    def get_contents(self, refresh=False):
-        if not refresh and self._contents_json:
-            return self._contents_json
-
-        content_uri = 'https://{0}/api/dataverses/{1}/contents'.format(
-            self.connection.host, self.alias
-        )
-        resp = requests.get(
-            content_uri,
-            params={'key': self.connection.token}
-        )
-
-        if resp.status_code != 200:
-            raise ConnectionError('Atom entry could not be retrieved.')
-
-        self._contents_json = resp.json()
-        return self._contents_json
 
     @property
     def citation(self):
@@ -188,51 +170,43 @@ class Dataset(object):
         ).text
         return self._state
 
-    def get_json(self, refresh=False):
-        if not refresh and self._json:
-            return self._json
+    def get_json(self, version="latest", refresh=False):
+        if not refresh and self._json.get(version):
+            return self._json.get(version)
 
         if not self.dataverse:
             raise NoContainerError('This dataset has not been added to a Dataverse.')
 
-        # TODO: Allow specification of other versions
-        json_url = 'https://{0}/api/datasets/{1}/versions/:latest-published'.format(
+        json_url = 'https://{0}/api/datasets/{1}/versions/:{2}'.format(
             self.connection.host,
-            self.id
+            self.id,
+            version,
         )
 
         resp = requests.get(json_url, params={'key': self.connection.token})
 
         if resp.status_code == 404:
-            raise UnpublishedDatasetError('JSON metadata cannot be retried for an unpublished dataset.')
+            raise VersionJsonNotFoundError('JSON metadata could not be found for this version.')
         elif resp.status_code != 200:
             raise ConnectionError('JSON metadata could not be retrieved.')
 
-        self._json = resp.json()['data']
-        return self._json
+        self._json[version] = resp.json()['data']
+        return self._json[version]
 
-    def get_file(self, file_name, published=False, refresh=True):
-        files = self.get_files(published, refresh)
+    def get_file(self, file_name, version="latest", refresh=True):
+        files = self.get_files(version, refresh)
         return next((f for f in files if f.name == file_name), None)
 
-    def get_file_by_id(self, file_id, published=False, refresh=True):
-        files = self.get_files(published, refresh)
+    def get_file_by_id(self, file_id, version="latest", refresh=True):
+        files = self.get_files(version, refresh)
         return next((f for f in files if f.id == file_id), None)
 
-    def get_files(self, published=False, refresh=True):
-        if published:
-            return self.get_published_files(refresh)
-
-        # TODO: Should the native API be preferred?
-        elements = get_elements(self.get_statement(refresh), 'entry')
-        return [DataverseFile.from_statement(self, element)
-                for element in elements]
-
-    def get_published_files(self, refresh=True):
+    def get_files(self, version="latest", refresh=True):
         try:
+            files_json = self.get_json(version, refresh)['files']
             return [DataverseFile.from_json(self, file_json)
-                    for file_json in self.get_json(refresh)['files']]
-        except UnpublishedDatasetError:
+                    for file_json in files_json]
+        except VersionJsonNotFoundError:
             return []
 
     def add_file(self, filepath):
@@ -292,11 +266,6 @@ class Dataset(object):
         self._refresh(receipt=receipt)
     
     def delete_file(self, dataverse_file):
-        if dataverse_file.is_published:
-            raise MethodNotAllowedError(
-                'Published versions of files cannot be deleted.'
-            )
-
         resp = requests.delete(
             dataverse_file.edit_media_uri,
             auth=self.connection.auth,
