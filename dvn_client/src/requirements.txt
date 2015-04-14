@@ -1,3 +1,0 @@
--e git+https://github.com/pjbull/python-client-sword2.git#egg=sword2
-argparse # for python 2.6
-lxml

@@ -1,65 +1,37 @@
-## Dataverse Network (DVN) API Client
+## Dataverse API Client
 
 This is a library for writing Python applications that make use of Dataverse
-Network (DVN) APIs.  The code started as a "proof of concept" in the
+APIs v4.0.  The code started as a "proof of concept" in the
 [dvn/swordpoc](https://github.com/dvn/swordpoc) repo and the intent is to
 publish the python client on https://pypi.python.org.
 
-The proof of concept
-[README.md](https://github.com/dvn/swordpoc/blob/master/dvn_client/README.md)
-has some tips that have not been incorporated in to this readme yet.
-
-We have been trying to target Python 2.6 because that's the version that ships
-with the latest version (6) of Red Hat Enterprise Linux (RHEL) and CentOS. For
-testing backward compatibility with Python 2.6, this repo includes a Vagrant
-environment. Please note that before you run `vagrant up` you'll need to run
-`git submodule init` and `git submodule update` once after cloning this repo.
-
 ## Installation
 
-You will need:
+This client requires python 2.6+.
+It has not been tested in python 3.
 
-* Python 2.6+
-* [pip](http://www.pip-installer.org/en/latest/)
-* gcc compiler (For OSX you will need xcode + command line tools, or [standalone install](https://github.com/kennethreitz/osx-gcc-installer#readme))
-* Dataverse account
+To install dataverse as a package:
 
-Once you have satisfied the above requirements, try the following commands.
-
-    $ git clone https://github.com/IQSS/dvn-client-python.git
-    $ cd dvn-client-python
-    $ virtualenv venv
-    $ source venv/bin/activate
-    $ pip install -r dvn_client/src/requirements.txt
-
-You may wish to manage virtualenvs using [virtualenvwrapper](http://virtualenvwrapper.readthedocs.org/en/latest/) instead.
+    $ pip install -e git+https://github.com/rliebz/dvn-client-python.git#egg=dataverse
 
 ## Configuration
 
-Make a `config_local.py` file and fill out the config elements as appropriate. Do not commit this file.
+Create a file at `settings/local.py`. The file should contain the following
+information:
 
 ```python
-DEFAULT_USERNAME = ""
-DEFAULT_PASSWORD = ""
-DEFAULT_HOST = "dvn-4.hmdc.harvard.ed"
-DEFAULT_CERT = "../resources/dvn-4.hmdc.harvard.edu" #see below for info on the cert
+DEFAULT_HOST = "dataverse-demo.iq.harvard.edu"
+DEFAULT_TOKEN = "" # Token can be generated at {host}/account/apitoken
 ```
 
-## Installation Test
+Do not commit this file.
 
-* Navigate to `dvn-client-python/dvn-client/src/`
-* Edit test data in `tests.py` as appropriate
-* Run the client `python dvn_client.py`
-* To run all of the tests, run `python dvn_test.py` (for more options see [unittest](http://docs.python.org/2/library/unittest.html#assert-methods))
+## Testing
 
-## PEM Certificate (optional)
+In order to run any tests, you must first create a Dataverse on the
+host you wish to test. Do not run tests on the production server.
 
-If you are using a self-signed certificate, you may see an SSL error when you
-try to hit the server. In that case, follow these instructions.
+To run tests
 
-1. Open private/incognito window (in case you have already added a security exception) in FireFox (instructions will be slightly different for other browsers)
-2. Go to: https://{SERVER}/dvn/api/data-deposit/swordv2/service-document
-3. Add Exception > View > Details > Export
-4. Save the PEM to the “resources” folder of the dvn\_client project
-5. When calling `Dataverse.connect()` or `Dataverse()` constructor, pass a path to this file as `cert=[PATH_TO_CERTIFICATE]`
-
+    $ cd dataverse/test
+    $ python -m unittest test_dataverse
