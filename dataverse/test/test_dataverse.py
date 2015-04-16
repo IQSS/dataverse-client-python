@@ -65,11 +65,11 @@ class TestUtils(object):
 class TestConnection(object):
 
     def test_connect(self):
-        c = Connection(TEST_HOST, TEST_TOKEN)
+        connection = Connection(TEST_HOST, TEST_TOKEN)
 
-        assert c.host == TEST_HOST
-        assert c.token == TEST_TOKEN
-        assert c.service_document
+        assert connection.host == TEST_HOST
+        assert connection.token == TEST_TOKEN
+        assert connection.service_document
 
     def test_connect_unauthorized(self):
         with pytest.raises(exceptions.UnauthorizedError):
@@ -85,6 +85,36 @@ class TestConnection(object):
 
         with pytest.raises(exceptions.ConnectionError):
             Connection(TEST_HOST, TEST_TOKEN)
+
+    def test_create_dataverse(self):
+        connection = Connection(TEST_HOST, TEST_TOKEN)
+        alias = str(uuid.uuid1())   # must be unique
+        connection.create_dataverse(
+            alias,
+            'Test Name',
+            'dataverse@example.com',
+        )
+
+        dataverse = connection.get_dataverse(alias, True)
+        try:
+            assert dataverse.alias == alias
+            assert dataverse.title == 'Test Name'
+        finally:
+            connection.delete_dataverse(alias)
+
+    def test_delete_dataverse(self):
+        connection = Connection(TEST_HOST, TEST_TOKEN)
+        alias = str(uuid.uuid1())   # must be unique
+        connection.create_dataverse(
+            alias,
+            'Test Name',
+            'dataverse@example.com',
+        )
+
+        connection.delete_dataverse(alias)
+        dataverse = connection.get_dataverse(alias, True)
+
+        assert dataverse is None
 
 
 class TestDataset(object):
