@@ -1,5 +1,6 @@
 import pytest
 
+import uuid
 import httpretty
 
 from dataverse.connection import Connection
@@ -125,55 +126,57 @@ class TestDatasetOperations(object):
     @classmethod
     def setup_class(cls):
         print "Connecting to DVN."
-        cls.dvc = Connection(TEST_HOST, TEST_TOKEN)
+        cls.connection = Connection(TEST_HOST, TEST_TOKEN)
 
-        print "Getting Dataverse"
-        dataverses = cls.dvc.get_dataverses()
-        if not dataverses:
-            raise exceptions.DataverseError(
-                'You must have a Dataverse to run these tests.'
-            )
+        print "Creating test Dataverse"
+        cls.alias = str(uuid.uuid1())
+        cls.connection.create_dataverse(
+            cls.alias,
+            'Test Dataverse',
+            'dataverse@example.com',
+        )
+        cls.dataverse = cls.connection.get_dataverse(cls.alias, True)
+        assert cls.dataverse
 
-        cls.dv = dataverses[0]
+    @classmethod
+    def teardown_class(cls):
 
-        print "Removing any existing datasets."
-        datasets = cls.dv.get_datasets()
-        for dataset in datasets:
-            if dataset.get_state() != 'DEACCESSIONED':
-                cls.dv.delete_dataset(dataset)
-        print 'Dataverse emptied.'
+        print "Removing test Dataverse"
+        cls.connection.delete_dataverse(cls.alias)
+        dataverse = cls.connection.get_dataverse(cls.alias, True)
+        assert dataverse is None
 
     def setup_method(self, method):
 
         # create a dataset for each test
         s = Dataset(**PICS_OF_CATS_DATASET)
-        self.dv.add_dataset(s)
-        self.s = self.dv.get_dataset_by_doi(s.doi)
+        self.dataverse.add_dataset(s)
+        self.dataset = self.dataverse.get_dataset_by_doi(s.doi)
 
     def teardown_method(self, method):
         try:
-            self.dv.delete_dataset(self.s)
+            self.dataverse.delete_dataset(self.dataset)
         finally:
             return
 
     def test_create_dataset_from_xml(self):
         new_dataset = Dataset.from_xml_file(ATOM_DATASET)
-        self.dv.add_dataset(new_dataset)
-        retrieved_dataset = self.dv.get_dataset_by_title("Roasting at Home")
+        self.dataverse.add_dataset(new_dataset)
+        retrieved_dataset = self.dataverse.get_dataset_by_title("Roasting at Home")
         assert retrieved_dataset
-        self.dv.delete_dataset(retrieved_dataset)
+        self.dataverse.delete_dataset(retrieved_dataset)
 
     def test_add_files(self):
-        self.s.add_files(EXAMPLE_FILES)
-        actual_files = [f.name for f in self.s.get_files()]
+        self.dataset.add_files(EXAMPLE_FILES)
+        actual_files = [f.name for f in self.dataset.get_files()]
 
         assert '__init__.py' in actual_files
         assert 'config.py' in actual_files
 
     def test_upload_file(self):
-        self.s.upload_file('file.txt', 'This is a simple text file!')
-        self.s.upload_file('file2.txt', 'This is the second simple text file!')
-        actual_files = [f.name for f in self.s.get_files()]
+        self.dataset.upload_file('file.txt', 'This is a simple text file!')
+        self.dataset.upload_file('file2.txt', 'This is the second simple text file!')
+        actual_files = [f.name for f in self.dataset.get_files()]
 
         assert 'file.txt' in actual_files
         assert 'file2.txt' in actual_files
@@ -182,45 +185,45 @@ class TestDatasetOperations(object):
         # this just tests we can get an entry back, but does
         # not do anything with that xml yet. however, we do use get_entry
         # in other methods so this test case is probably covered
-        assert self.s.get_entry()
+        assert self.dataset.get_entry()
         
     def test_display_dataset_statement(self):
         # this just tests we can get an entry back, but does
         # not do anything with that xml yet. however, we do use get_statement
         # in other methods so this test case is probably covered
-        assert self.s.get_statement()
+        assert self.dataset.get_statement()
     
     def test_delete_a_file(self):
-        self.s.upload_file('cat.jpg', b'Whatever a cat looks like goes here.')
+        self.dataset.upload_file('cat.jpg', b'Whatever a cat looks like goes here.')
         
         # Add file and confirm
-        files = self.s.get_files()
+        files = self.dataset.get_files()
         assert len(files) == 1
         assert files[0].name == 'cat.jpg'
         
         # Delete file and confirm
-        self.s.delete_file(files[0])
-        files = self.s.get_files()
+        self.dataset.delete_file(files[0])
+        files = self.dataset.get_files()
         assert not files
         
     def test_delete_a_dataset(self):
         xmlDataset = Dataset.from_xml_file(ATOM_DATASET)
-        self.dv.add_dataset(xmlDataset)
-        atomDataset = self.dv.get_dataset_by_title("Roasting at Home")
-        num_datasets = len(self.dv.get_datasets())
+        self.dataverse.add_dataset(xmlDataset)
+        atomDataset = self.dataverse.get_dataset_by_title("Roasting at Home")
+        num_datasets = len(self.dataverse.get_datasets())
 
         assert num_datasets > 0
-        self.dv.delete_dataset(atomDataset)
+        self.dataverse.delete_dataset(atomDataset)
         assert atomDataset.get_state(refresh=True) == 'DEACCESSIONED'
-        assert len(self.dv.get_datasets()) == num_datasets - 1
+        assert len(self.dataverse.get_datasets()) == num_datasets - 1
 
     @pytest.mark.skipif(True, reason='Published datasets can no longer be deaccessioned via API')
     def test_publish_dataset(self):
-        assert self.s.get_state() == "DRAFT"
-        self.s.publish()
-        assert self.s.get_state() == "PUBLISHED"
-        self.dv.delete_dataset(self.s)
-        assert self.s.get_state(refresh=True) == "DEACCESSIONED"
+        assert self.dataset.get_state() == "DRAFT"
+        self.dataset.publish()
+        assert self.dataset.get_state() == "PUBLISHED"
+        self.dataverse.delete_dataset(self.dataset)
+        assert self.dataset.get_state(refresh=True) == "DEACCESSIONED"
 
     
 if __name__ == '__main__':
