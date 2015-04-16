@@ -14,7 +14,6 @@ class Connection(object):
         self.host = host
         self.sd_uri = "https://{host}/dvn/api/data-deposit/v1.1/swordv2/service-document".format(host=self.host)
         self.service_document = None
-        self.connected = False
         
         self.connect()
 
@@ -31,7 +30,6 @@ class Connection(object):
             raise ConnectionError('Could not connect to the Dataverse')
 
         self.service_document = etree.XML(resp.content)
-        self.connected = True
         
     def get_dataverses(self, refresh=False):
         if refresh:

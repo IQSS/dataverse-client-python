@@ -1,15 +1,16 @@
 import unittest
 
-import logging
-logging.basicConfig(level=logging.ERROR)
+import httpretty
 
-# local modules
 from dataverse.connection import Connection
 from dataverse.dataset import Dataset
-from dataverse.exceptions import DataverseError
 from dataverse.settings import TEST_HOST, TEST_TOKEN
-from dataverse.test.config import PICS_OF_CATS_DATASET, ATOM_DATASET
+from dataverse.test.config import PICS_OF_CATS_DATASET, ATOM_DATASET, EXAMPLE_FILES
+from dataverse import exceptions
 from dataverse import utils
+
+import logging
+logging.basicConfig(level=logging.ERROR)
 
 
 class TestUtils(unittest.TestCase):
@@ -52,6 +53,31 @@ class TestUtils(unittest.TestCase):
         # A term in the replacement dict
         formatted_term = utils.format_term('id', namespace='dcterms')
         self.assertEqual(formatted_term, '{http://purl.org/dc/terms/}identifier')
+
+
+class TestConnection(unittest.TestCase):
+
+    def test_connect(self):
+        c = Connection(TEST_HOST, TEST_TOKEN)
+
+        self.assertEqual(c.host, TEST_HOST)
+        self.assertEqual(c.token, TEST_TOKEN)
+        self.assertTrue(c.service_document)
+
+    def test_connect_unauthorized(self):
+        with self.assertRaises(exceptions.UnauthorizedError):
+            Connection(TEST_HOST, 'wrong-token')
+
+    @httpretty.activate
+    def test_connect_unknown_failure(self):
+        httpretty.register_uri(
+            httpretty.GET,
+            "https://{host}/dvn/api/data-deposit/v1.1/swordv2/service-document".format(host=TEST_HOST),
+            status=400,
+        )
+
+        with self.assertRaises(exceptions.ConnectionError):
+            Connection(TEST_HOST, TEST_TOKEN)
 
 
 class TestDataset(unittest.TestCase):
@@ -98,7 +124,7 @@ class TestDatasetOperations(unittest.TestCase):
         print "Getting Dataverse"
         dataverses = self.dvc.get_dataverses()
         if not dataverses:
-            raise DataverseError(
+            raise exceptions.DataverseError(
                 'You must have a Dataverse to run these tests.'
             )
 
@@ -136,10 +162,10 @@ class TestDatasetOperations(unittest.TestCase):
         self.dv.delete_dataset(retrieved_dataset)
 
     def test_add_files(self):
-        self.s.add_files(['test_dataverse.py', 'config.py'])
+        self.s.add_files(EXAMPLE_FILES)
         actual_files = [f.name for f in self.s.get_files()]
 
-        self.assertIn('test_dataverse.py', actual_files)
+        self.assertIn('__init__.py', actual_files)
         self.assertIn('config.py', actual_files)
 
     def test_upload_file(self):
