@@ -46,3 +46,8 @@ class UnpublishedDataverseError(DataverseError):
 class VersionJsonNotFoundError(DataverseError):
     """Raised when requested json data for a version is not found"""
     pass
+
+
+class DataverseNotFoundError(DataverseError):
+    """Raised when a Dataverse cannot be found"""
+    pass
