@@ -12,15 +12,18 @@ class Connection(object):
         self.token = token
         self.host = host
         self.sd_uri = 'https://{host}/dvn/api/data-deposit/v1.1/swordv2/service-document'.format(host=self.host)
-        self.service_document = None
+        self._service_document = None
 
-        self.connect()
+        self.get_service_document()
 
     @property
     def auth(self):
         return self.token, None
 
-    def connect(self):
+    def get_service_document(self, refresh=False):
+        if not refresh and self._service_document:
+            return self._service_document
+
         resp = requests.get(self.sd_uri, auth=self.auth)
 
         if resp.status_code == 403:
@@ -28,7 +31,8 @@ class Connection(object):
         elif resp.status_code != 200:
             raise exceptions.ConnectionError('Could not connect to the Dataverse')
 
-        self.service_document = etree.XML(resp.content)
+        self._service_document = etree.XML(resp.content)
+        return self._service_document
 
     def create_dataverse(self, alias, name, email, parent=':root'):
         resp = requests.post(
@@ -46,6 +50,8 @@ class Connection(object):
         elif resp.status_code != 201:
             raise exceptions.OperationFailedError('{0} Dataverse could not be created.'.format(name))
 
+        self.get_service_document(refresh=True)
+
     def delete_dataverse(self, alias):
         resp = requests.delete(
             'https://{0}/api/dataverses/{1}'.format(self.host, alias),
@@ -59,12 +65,11 @@ class Connection(object):
         elif resp.status_code != 200:
             raise exceptions.OperationFailedError('Dataverse {0} could not be deleted.'.format(alias))
 
-    def get_dataverses(self, refresh=False):
-        if refresh:
-            self.connect()
+        self.get_service_document(refresh=True)
 
+    def get_dataverses(self, refresh=False):
         collections = get_elements(
-            self.service_document[0],
+            self.get_service_document(refresh)[0],
             tag='collection',
         )
 

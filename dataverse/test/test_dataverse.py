@@ -69,7 +69,7 @@ class TestConnection(object):
 
         assert connection.host == TEST_HOST
         assert connection.token == TEST_TOKEN
-        assert connection.service_document
+        assert connection._service_document
 
     def test_connect_unauthorized(self):
         with pytest.raises(exceptions.UnauthorizedError):
@@ -115,6 +115,47 @@ class TestConnection(object):
         dataverse = connection.get_dataverse(alias, True)
 
         assert dataverse is None
+
+    def test_get_dataverses(self):
+        connection = Connection(TEST_HOST, TEST_TOKEN)
+        original_dataverses = connection.get_dataverses()
+        assert isinstance(original_dataverses, list)
+
+        alias = str(uuid.uuid1())   # must be unique
+
+        connection.create_dataverse(
+            alias,
+            'Test Name',
+            'dataverse@example.com',
+        )
+
+        current_dataverses = connection.get_dataverses()
+        try:
+            assert len(current_dataverses) == len(original_dataverses) + 1
+            assert alias in [dataverse.alias for dataverse in current_dataverses]
+        finally:
+            connection.delete_dataverse(alias)
+
+        current_dataverses = connection.get_dataverses()
+        assert [dataverse.alias for dataverse in current_dataverses] == [dataverse.alias for dataverse in original_dataverses]
+
+    def test_get_dataverse(self):
+        connection = Connection(TEST_HOST, TEST_TOKEN)
+        alias = str(uuid.uuid1())   # must be unique
+        assert connection.get_dataverse(alias) is None
+
+        connection.create_dataverse(
+            alias,
+            'Test Name',
+            'dataverse@example.com',
+        )
+
+        dataverse = connection.get_dataverse(alias)
+        try:
+            assert dataverse is not None
+            assert dataverse.alias == alias
+        finally:
+            connection.delete_dataverse(alias)
 
 
 class TestDataset(object):
