@@ -37,17 +37,18 @@ Create a file at `dataverse/settings/local.py`. The file should contain the foll
 information:
 
 ```python
-TEST_HOST = "apitest.dataverse.org"
-TEST_TOKEN = "" # Token can be generated at {host}/account/apitoken
+TEST_HOST = 'apitest.dataverse.org'  # or 'dataverse-demo.iq.harvard.edu'
+TEST_TOKEN = '' # Token can be generated at {host}/account/apitoken
 ```
 
 Do not commit this file.
 
 ### Running Tests
 
-In order to run any tests, you must first create a Dataverse on the
-host you wish to test. Do not run tests on the production server.
-
 To run tests:
 
     $ py.test
+
+Or, to run a specific test:
+
+    $ py.test dataverse/test/test_dataverse.py::TestClassName::test_method_name

@@ -23,12 +23,12 @@ def get_elements(root, tag='*', namespace=None, attribute=None, attribute_value=
     if namespace is None:
         xpath = tag
     else:
-        xpath = "{{{ns}}}{tag}".format(ns=namespace, tag=tag)
+        xpath = '{{{ns}}}{tag}'.format(ns=namespace, tag=tag)
 
     if attribute and not attribute_value:
-        xpath += "[@{att}]".format(att=attribute)
+        xpath += '[@{att}]'.format(att=attribute)
     elif not attribute and attribute_value:
-        raise Exception("You must pass an attribute with attribute_value")
+        raise Exception('You must pass an attribute with attribute_value')
     elif attribute and attribute_value:
         xpath += "[@{att}='{val}']".format(att=attribute, val=attribute_value)
 

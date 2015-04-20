@@ -55,13 +55,13 @@ class Dataset(object):
     def from_dataverse(cls, entry_element, dataverse):
 
         # Entry not in appropriate format--extract relevant metadata
-        id_element = get_element(entry_element, tag="id")
-        title_element = get_element(entry_element, tag="title")
+        id_element = get_element(entry_element, tag='id')
+        title_element = get_element(entry_element, tag='title')
         edit_media_element = get_element(
             entry_element,
-            tag="link",
-            attribute="rel",
-            attribute_value="edit-media",
+            tag='link',
+            attribute='rel',
+            attribute_value='edit-media',
         )
 
         return cls(
@@ -78,7 +78,7 @@ class Dataset(object):
             raise NoContainerError('This dataset has not been added to a Dataverse.')
 
         # Note: This depends strongly on URL structure, and may break easily
-        return self.edit_media_uri.rsplit("/study/", 1)[-1]
+        return self.edit_media_uri.rsplit('/study/', 1)[-1]
 
     @property
     def id(self):
@@ -105,7 +105,7 @@ class Dataset(object):
         return get_element(
             self.get_entry(),
             namespace='http://purl.org/dc/terms/',
-            tag="bibliographicCitation"
+            tag='bibliographicCitation'
         ).text
 
     @property
@@ -136,19 +136,19 @@ class Dataset(object):
             # Try to find statement uri without a request to the server
             link = get_element(
                 self.get_entry(),
-                tag="link",
-                attribute="rel",
-                attribute_value="http://purl.org/net/sword/terms/statement",
+                tag='link',
+                attribute='rel',
+                attribute_value='http://purl.org/net/sword/terms/statement',
             )
             if link is None:
                 # Find link with request to server
                 link = get_element(
                     self.get_entry(refresh=True),
-                    tag="link",
-                    attribute="rel",
-                    attribute_value="http://purl.org/net/sword/terms/statement",
+                    tag='link',
+                    attribute='rel',
+                    attribute_value='http://purl.org/net/sword/terms/statement',
                 )
-            self.statement_uri = link.get("href")
+            self.statement_uri = link.get('href')
 
         resp = requests.get(self.statement_uri, auth=self.connection.auth)
 
@@ -164,13 +164,13 @@ class Dataset(object):
 
         self._state = get_element(
             self.get_statement(refresh),
-            tag="category",
-            attribute="term",
-            attribute_value="latestVersionState"
+            tag='category',
+            attribute='term',
+            attribute_value='latestVersionState'
         ).text
         return self._state
 
-    def get_json(self, version="latest", refresh=False):
+    def get_json(self, version='latest', refresh=False):
         if not refresh and self._json.get(version):
             return self._json.get(version)
 
@@ -193,15 +193,15 @@ class Dataset(object):
         self._json[version] = resp.json()['data']
         return self._json[version]
 
-    def get_file(self, file_name, version="latest", refresh=True):
+    def get_file(self, file_name, version='latest', refresh=True):
         files = self.get_files(version, refresh)
         return next((f for f in files if f.name == file_name), None)
 
-    def get_file_by_id(self, file_id, version="latest", refresh=True):
+    def get_file_by_id(self, file_id, version='latest', refresh=True):
         files = self.get_files(version, refresh)
         return next((f for f in files if f.id == file_id), None)
 
-    def get_files(self, version="latest", refresh=True):
+    def get_files(self, version='latest', refresh=True):
         try:
             files_json = self.get_json(version, refresh)['files']
             return [DataverseFile.from_json(self, file_json)
@@ -264,7 +264,7 @@ class Dataset(object):
 
         receipt = resp.content
         self._refresh(receipt=receipt)
-    
+
     def delete_file(self, dataverse_file):
         resp = requests.delete(
             dataverse_file.edit_media_uri,
@@ -273,7 +273,7 @@ class Dataset(object):
 
         if resp.status_code != 204:
             raise OperationFailedError('The file could not be deleted.')
-        
+
     def delete_all_files(self):
         for f in self.get_files():
             self.delete_file(f)

@@ -79,7 +79,7 @@ class TestConnection(object):
     def test_connect_unknown_failure(self):
         httpretty.register_uri(
             httpretty.GET,
-            "https://{host}/dvn/api/data-deposit/v1.1/swordv2/service-document".format(host=TEST_HOST),
+            'https://{host}/dvn/api/data-deposit/v1.1/swordv2/service-document'.format(host=TEST_HOST),
             status=400,
         )
 
@@ -155,10 +155,10 @@ class TestDatasetOperations(object):
 
     @classmethod
     def setup_class(cls):
-        print "Connecting to DVN."
+        print 'Connecting to Dataverse host at {0}'.format(TEST_HOST)
         cls.connection = Connection(TEST_HOST, TEST_TOKEN)
 
-        print "Creating test Dataverse"
+        print 'Creating test Dataverse'
         cls.alias = str(uuid.uuid1())
         cls.connection.create_dataverse(
             cls.alias,
@@ -171,7 +171,7 @@ class TestDatasetOperations(object):
     @classmethod
     def teardown_class(cls):
 
-        print "Removing test Dataverse"
+        print 'Removing test Dataverse'
         cls.connection.delete_dataverse(cls.alias)
         dataverse = cls.connection.get_dataverse(cls.alias, True)
         assert dataverse is None
@@ -192,7 +192,7 @@ class TestDatasetOperations(object):
     def test_create_dataset_from_xml(self):
         new_dataset = Dataset.from_xml_file(ATOM_DATASET)
         self.dataverse.add_dataset(new_dataset)
-        retrieved_dataset = self.dataverse.get_dataset_by_title("Roasting at Home")
+        retrieved_dataset = self.dataverse.get_dataset_by_title('Roasting at Home')
         assert retrieved_dataset
         self.dataverse.delete_dataset(retrieved_dataset)
 
@@ -239,7 +239,7 @@ class TestDatasetOperations(object):
     def test_delete_a_dataset(self):
         xmlDataset = Dataset.from_xml_file(ATOM_DATASET)
         self.dataverse.add_dataset(xmlDataset)
-        atomDataset = self.dataverse.get_dataset_by_title("Roasting at Home")
+        atomDataset = self.dataverse.get_dataset_by_title('Roasting at Home')
         num_datasets = len(self.dataverse.get_datasets())
 
         assert num_datasets > 0
@@ -249,11 +249,11 @@ class TestDatasetOperations(object):
 
     @pytest.mark.skipif(True, reason='Published datasets can no longer be deaccessioned via API')
     def test_publish_dataset(self):
-        assert self.dataset.get_state() == "DRAFT"
+        assert self.dataset.get_state() == 'DRAFT'
         self.dataset.publish()
-        assert self.dataset.get_state() == "PUBLISHED"
+        assert self.dataset.get_state() == 'PUBLISHED'
         self.dataverse.delete_dataset(self.dataset)
-        assert self.dataset.get_state(refresh=True) == "DEACCESSIONED"
+        assert self.dataset.get_state(refresh=True) == 'DEACCESSIONED'
 
     
 if __name__ == '__main__':

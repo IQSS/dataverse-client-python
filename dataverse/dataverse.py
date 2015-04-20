@@ -24,8 +24,8 @@ class Dataverse(object):
 
         status_tag = get_element(
             collection_info,
-            namespace="http://purl.org/net/sword/terms/state",
-            tag="dataverseHasBeenReleased",
+            namespace='http://purl.org/net/sword/terms/state',
+            tag='dataverseHasBeenReleased',
         )
         status = status_tag.text
 
@@ -94,7 +94,7 @@ class Dataverse(object):
 
         dataset.dataverse = self
         dataset._refresh(receipt=resp.content)
-        
+
     def delete_dataset(self, dataset):
         if dataset._state == 'DELETED' or dataset._state == 'DEACCESSIONED':
             return
@@ -104,12 +104,14 @@ class Dataverse(object):
             auth=self.connection.auth,
         )
         if resp.status_code == 405:
-            raise MethodNotAllowedError('Published datasets can only be '
-                'deleted from the GUI. For more information, please refer to '
-                'https://github.com/IQSS/dataverse/issues/778')
+            raise MethodNotAllowedError(
+                'Published datasets can only be deleted from the GUI. For '
+                'more information, please refer to '
+                'https://github.com/IQSS/dataverse/issues/778'
+            )
 
         dataset._state = 'DEACCESSIONED'
-        
+
     def get_datasets(self):
 
         collection_info = requests.get(
