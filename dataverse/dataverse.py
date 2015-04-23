@@ -87,13 +87,17 @@ class Dataverse(object):
         if resp.status_code != 200:
             raise OperationFailedError('The Dataverse could not be published.')
 
-    def add_dataset(self, dataset):
-        if get_element(dataset._entry, 'title', 'dcterms') is None:
-            raise InsufficientMetadataError('This dataset must have a title.')
-        if get_element(dataset._entry, 'description', 'dcterms') is None:
-            raise InsufficientMetadataError('This dataset must have a description.')
-        if get_element(dataset._entry, 'creator', 'dcterms') is None:
-            raise InsufficientMetadataError('This dataset must have an author.')
+    def create_dataset(self, title, description, creator, **kwargs):
+        dataset = Dataset(
+            title=title,
+            description=description,
+            creator=creator,
+            **kwargs
+        )
+
+        self._add_dataset(dataset)
+
+    def _add_dataset(self, dataset):
 
         resp = requests.post(
             self.collection.get('href'),
@@ -110,7 +114,7 @@ class Dataverse(object):
         self.get_collection_info(refresh=True)
 
     def delete_dataset(self, dataset):
-        if dataset._state == 'DELETED' or dataset._state == 'DEACCESSIONED':
+        if dataset.get_state() == 'DELETED' or dataset.get_state() == 'DEACCESSIONED':
             return
 
         resp = requests.delete(
@@ -124,7 +128,7 @@ class Dataverse(object):
                 'https://github.com/IQSS/dataverse/issues/778'
             )
 
-        dataset._state = 'DEACCESSIONED'
+        dataset.is_deleted = True
         self.get_collection_info(refresh=True)
 
     def get_datasets(self, refresh=False):

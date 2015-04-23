@@ -220,9 +220,9 @@ class TestDatasetOperations(object):
     def setup_method(self, method):
 
         # create a dataset for each test
-        s = Dataset(**PICS_OF_CATS_DATASET)
-        self.dataverse.add_dataset(s)
-        self.dataset = self.dataverse.get_dataset_by_doi(s.doi)
+        dataset = Dataset(**PICS_OF_CATS_DATASET)
+        self.dataverse._add_dataset(dataset)
+        self.dataset = self.dataverse.get_dataset_by_doi(dataset.doi)
 
     def teardown_method(self, method):
         try:
@@ -230,9 +230,18 @@ class TestDatasetOperations(object):
         finally:
             return
 
-    def test_create_dataset_from_xml(self):
+    def test_create_dataset(self):
+        title = str(uuid.uuid1())   # must be unique
+        self.dataverse.create_dataset(title, 'Descripty', 'foo@test.com')
+        dataset = self.dataverse.get_dataset_by_title(title)
+        try:
+            assert dataset.title == title
+        finally:
+            self.dataverse.delete_dataset(dataset)
+
+    def test_add_dataset_from_xml(self):
         new_dataset = Dataset.from_xml_file(ATOM_DATASET)
-        self.dataverse.add_dataset(new_dataset)
+        self.dataverse._add_dataset(new_dataset)
         retrieved_dataset = self.dataverse.get_dataset_by_title('Roasting at Home')
         assert retrieved_dataset
         self.dataverse.delete_dataset(retrieved_dataset)
@@ -279,7 +288,7 @@ class TestDatasetOperations(object):
         
     def test_delete_a_dataset(self):
         xmlDataset = Dataset.from_xml_file(ATOM_DATASET)
-        self.dataverse.add_dataset(xmlDataset)
+        self.dataverse._add_dataset(xmlDataset)
         atomDataset = self.dataverse.get_dataset_by_title('Roasting at Home')
         num_datasets = len(self.dataverse.get_datasets())
 

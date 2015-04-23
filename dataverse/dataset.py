@@ -26,10 +26,10 @@ class Dataset(object):
         self.edit_uri = edit_uri
         self.edit_media_uri = edit_media_uri
         self.statement_uri = statement_uri
+        self.is_deleted = False
 
         self._entry = etree.XML(entry) if isinstance(entry, str) else entry
         self._statement = None
-        self._state = None
         self._json = {}
         self._id = None
 
@@ -159,16 +159,15 @@ class Dataset(object):
         return self._statement
 
     def get_state(self, refresh=False):
-        if not refresh and self._state or self._state == 'DEACCESSIONED':
-            return self._state
+        if self.is_deleted:
+            return 'DEACCESSIONED'
 
-        self._state = get_element(
+        return get_element(
             self.get_statement(refresh),
             tag='category',
             attribute='term',
             attribute_value='latestVersionState'
         ).text
-        return self._state
 
     def get_json(self, version='latest', refresh=False):
         if not refresh and self._json.get(version):
@@ -193,15 +192,28 @@ class Dataset(object):
         self._json[version] = resp.json()['data']
         return self._json[version]
 
-    def get_file(self, file_name, version='latest', refresh=True):
+    def publish(self):
+        resp = requests.post(
+            self.edit_uri,
+            headers={'In-Progress': 'false', 'Content-Length': 0},
+            auth=self.connection.auth,
+        )
+
+        if resp.status_code != 200:
+            raise OperationFailedError('The Dataverse could not be published.')
+
+        receipt = resp.content
+        self._refresh(receipt=receipt, published=True)
+
+    def get_file(self, file_name, version='latest', refresh=False):
         files = self.get_files(version, refresh)
         return next((f for f in files if f.name == file_name), None)
 
-    def get_file_by_id(self, file_id, version='latest', refresh=True):
+    def get_file_by_id(self, file_id, version='latest', refresh=False):
         files = self.get_files(version, refresh)
         return next((f for f in files if f.id == file_id), None)
 
-    def get_files(self, version='latest', refresh=True):
+    def get_files(self, version='latest', refresh=False):
         try:
             files_json = self.get_json(version, refresh)['files']
             return [DataverseFile.from_json(self, file_json)
@@ -250,20 +262,7 @@ class Dataset(object):
             auth=self.connection.auth,
         )
 
-        self._refresh()
-
-    def publish(self):
-        resp = requests.post(
-            self.edit_uri,
-            headers={'In-Progress': 'false', 'Content-Length': 0},
-            auth=self.connection.auth,
-        )
-
-        if resp.status_code != 200:
-            raise OperationFailedError('The Dataverse could not be published.')
-
-        receipt = resp.content
-        self._refresh(receipt=receipt)
+        self.get_json(refresh=True)
 
     def delete_file(self, dataverse_file):
         resp = requests.delete(
@@ -273,6 +272,8 @@ class Dataset(object):
 
         if resp.status_code != 204:
             raise OperationFailedError('The file could not be deleted.')
+
+        self.get_json(refresh=True)
 
     def delete_all_files(self):
         for f in self.get_files():
@@ -290,7 +291,7 @@ class Dataset(object):
     #     self._refresh(deposit_receipt=depositReceipt)
 
     # if we perform a server operation, we should refresh the dataset object
-    def _refresh(self, receipt=None):
+    def _refresh(self, receipt=None, published=False):
         if receipt:
             self.edit_uri = get_element(
                 receipt,
@@ -312,4 +313,6 @@ class Dataset(object):
             ).get('href')
         self.get_statement(refresh=True)
         self.get_entry(refresh=True)
-        self.get_state(refresh=True)
+
+        update_version = 'latest-published' if published else 'latest'
+        self.get_json(update_version, refresh=True)
