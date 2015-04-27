@@ -1,4 +1,5 @@
 import os
+import json
 import StringIO
 from zipfile import ZipFile
 
@@ -6,8 +7,8 @@ from lxml import etree
 import requests
 
 from exceptions import (
-    NoContainerError, OperationFailedError,
-    ConnectionError, MetadataNotFoundError, VersionJsonNotFoundError
+    NoContainerError, OperationFailedError, UnpublishedDataverseError,
+    ConnectionError, MetadataNotFoundError, VersionJsonNotFoundError,
 )
 from file import DataverseFile
 from settings import SWORD_BOOTSTRAP
@@ -30,7 +31,7 @@ class Dataset(object):
 
         self._entry = etree.XML(entry) if isinstance(entry, str) else entry
         self._statement = None
-        self._json = {}
+        self._metadata = {}
         self._id = None
 
         # Updates sword entry from keyword arguments
@@ -169,30 +170,70 @@ class Dataset(object):
             attribute_value='latestVersionState'
         ).text
 
-    def get_json(self, version='latest', refresh=False):
-        if not refresh and self._json.get(version):
-            return self._json.get(version)
+    def get_metadata(self, version='latest', refresh=False):
+        if not refresh and self._metadata.get(version):
+            return self._metadata[version]
 
         if not self.dataverse:
             raise NoContainerError('This dataset has not been added to a Dataverse.')
 
-        json_url = 'https://{0}/api/datasets/{1}/versions/:{2}'.format(
+        url = 'https://{0}/api/datasets/{1}/versions/:{2}'.format(
             self.connection.host,
             self.id,
             version,
         )
 
-        resp = requests.get(json_url, params={'key': self.connection.token})
+        resp = requests.get(url, params={'key': self.connection.token})
 
         if resp.status_code == 404:
             raise VersionJsonNotFoundError('JSON metadata could not be found for this version.')
         elif resp.status_code != 200:
             raise ConnectionError('JSON metadata could not be retrieved.')
 
-        self._json[version] = resp.json()['data']
-        return self._json[version]
+        metadata = resp.json()['data']
+        self._metadata[version] = metadata
+
+        # Update corresponding version metadata if retrieving 'latest'
+        if version == 'latest':
+            latest_version = 'latest-published' if metadata['versionState'] == 'RELEASED' else 'draft'
+            self._metadata[latest_version] = metadata
+
+        return metadata
+
+    def update_metadata(self, metadata):
+        """Updates dataset draft with provided metadata.
+        Will create a draft version if none exists.
+
+        :param dict metadata: json retrieved from `get_version_metadata`
+        """
+        url = 'https://{0}/api/datasets/{1}/versions/:draft'.format(
+            self.connection.host,
+            self.id,
+        )
+        resp = requests.put(
+            url,
+            headers={'Content-type': 'application/json'},
+            data=json.dumps(metadata),
+            params={'key': self.connection.token},
+        )
+
+        if resp.status_code != 200:
+            raise OperationFailedError('JSON metadata could not be updated.')
+
+        updated_metadata = resp.json()['data']
+        self._metadata['draft'] = updated_metadata
+        self._metadata['latest'] = updated_metadata
+
+    def create_draft(self):
+        """Create draft version of dataset without changing metadata"""
+        metadata = self.get_metadata(refresh=True)
+        if metadata.get('versionState') == 'RELEASED':
+            self.update_metadata(metadata)
 
     def publish(self):
+        if not self.dataverse.is_published:
+            raise UnpublishedDataverseError('Host Dataverse must be published.')
+
         resp = requests.post(
             self.edit_uri,
             headers={'In-Progress': 'false', 'Content-Length': 0},
@@ -200,10 +241,10 @@ class Dataset(object):
         )
 
         if resp.status_code != 200:
-            raise OperationFailedError('The Dataverse could not be published.')
+            raise OperationFailedError('The Dataset could not be published.')
 
-        receipt = resp.content
-        self._refresh(receipt=receipt, published=True)
+        self._metadata.pop('draft', None)
+        self._refresh(receipt=resp.content)
 
     def get_file(self, file_name, version='latest', refresh=False):
         files = self.get_files(version, refresh)
@@ -215,7 +256,7 @@ class Dataset(object):
 
     def get_files(self, version='latest', refresh=False):
         try:
-            files_json = self.get_json(version, refresh)['files']
+            files_json = self.get_metadata(version, refresh)['files']
             return [DataverseFile.from_json(self, file_json)
                     for file_json in files_json]
         except VersionJsonNotFoundError:
@@ -262,7 +303,7 @@ class Dataset(object):
             auth=self.connection.auth,
         )
 
-        self.get_json(refresh=True)
+        self.get_metadata(refresh=True)
 
     def delete_file(self, dataverse_file):
         resp = requests.delete(
@@ -273,25 +314,10 @@ class Dataset(object):
         if resp.status_code != 204:
             raise OperationFailedError('The file could not be deleted.')
 
-        self.get_json(refresh=True)
+        self.get_metadata(refresh=True)
 
-    def delete_all_files(self):
-        for f in self.get_files():
-            self.delete_file(f)
-
-    # TODO: DANGEROUS! Will delete all unspecified fields! Deposit receipts only give SOME of the fields
-    # Can potentially be replaced with native API functionality
-    # def update_metadata(self):
-    #     depositReceipt = self.hostDataverse.connection.sword.update(
-    #         dr=self.lastDepositReceipt,
-    #         edit_iri=self.editUri,
-    #         edit_media_iri=self.editMediaUri,
-    #         metadata_entry=self.entry,
-    #     )
-    #     self._refresh(deposit_receipt=depositReceipt)
-
-    # if we perform a server operation, we should refresh the dataset object
-    def _refresh(self, receipt=None, published=False):
+    # If we perform a server operation, we should refresh the dataset object
+    def _refresh(self, receipt=None):
         if receipt:
             self.edit_uri = get_element(
                 receipt,
@@ -311,8 +337,7 @@ class Dataset(object):
                 attribute='rel',
                 attribute_value='http://purl.org/net/sword/terms/statement'
             ).get('href')
+
         self.get_statement(refresh=True)
         self.get_entry(refresh=True)
-
-        update_version = 'latest-published' if published else 'latest'
-        self.get_json(update_version, refresh=True)
+        self.get_metadata('latest', refresh=True)

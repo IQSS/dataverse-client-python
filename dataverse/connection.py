@@ -21,7 +21,7 @@ class Connection(object):
         return self.token, None
 
     def get_service_document(self, refresh=False):
-        if not refresh and self._service_document:
+        if not refresh and self._service_document is not None:
             return self._service_document
 
         resp = requests.get(self.sd_uri, auth=self.auth)
