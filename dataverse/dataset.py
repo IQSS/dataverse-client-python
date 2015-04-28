@@ -262,10 +262,10 @@ class Dataset(object):
         except VersionJsonNotFoundError:
             return []
 
-    def add_file(self, filepath):
-        self.add_files([filepath])
+    def upload_filepath(self, filepath):
+        self.upload_filepaths([filepath])
 
-    def add_files(self, filepaths):
+    def upload_filepaths(self, filepaths):
         # Convert a directory to a list of files
         if len(filepaths) == 1 and os.path.isdir(filepaths[0]):
             filepaths = get_files_in_path(filepaths[0])
@@ -278,10 +278,10 @@ class Dataset(object):
         zip_file.close()
         content = s.getvalue()
 
-        self.upload_file('temp.zip', content, zip=False)
+        self.upload_file('temp.zip', content, zip_files=False)
 
-    def upload_file(self, filename, content, zip=True):
-        if zip:
+    def upload_file(self, filename, content, zip_files=True):
+        if zip_files:
             s = StringIO.StringIO()
             zip_file = ZipFile(s, 'w')
             zip_file.writestr(filename, content)
@@ -304,6 +304,7 @@ class Dataset(object):
         )
 
         self.get_metadata(refresh=True)
+        # Note: We can't determine which file was uploaded. Returns None
 
     def delete_file(self, dataverse_file):
         resp = requests.delete(

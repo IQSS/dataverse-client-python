@@ -51,19 +51,21 @@ class Connection(object):
             raise exceptions.OperationFailedError('{0} Dataverse could not be created.'.format(name))
 
         self.get_service_document(refresh=True)
+        return self.get_dataverse(alias)
 
-    def delete_dataverse(self, alias):
+    def delete_dataverse(self, dataverse):
+
         resp = requests.delete(
-            'https://{0}/api/dataverses/{1}'.format(self.host, alias),
+            'https://{0}/api/dataverses/{1}'.format(self.host, dataverse.alias),
             params={'key': self.token},
         )
 
         if resp.status_code == 401:
             raise exceptions.UnauthorizedError('Delete Dataverse unauthorized.')
         elif resp.status_code == 404:
-            raise exceptions.DataverseNotFoundError('Dataverse {0} was not found.'.format(alias))
+            raise exceptions.DataverseNotFoundError('Dataverse {0} was not found.'.format(dataverse.alias))
         elif resp.status_code != 200:
-            raise exceptions.OperationFailedError('Dataverse {0} could not be deleted.'.format(alias))
+            raise exceptions.OperationFailedError('Dataverse {0} could not be deleted.'.format(dataverse.alias))
 
         self.get_service_document(refresh=True)
 

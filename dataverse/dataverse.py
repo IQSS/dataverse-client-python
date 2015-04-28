@@ -2,8 +2,7 @@ import requests
 
 from dataset import Dataset
 from exceptions import (
-    InsufficientMetadataError, MethodNotAllowedError, OperationFailedError,
-    ConnectionError
+    ConnectionError, MethodNotAllowedError, OperationFailedError,
 )
 from utils import get_element, get_elements, sanitize
 
@@ -96,6 +95,7 @@ class Dataverse(object):
         )
 
         self._add_dataset(dataset)
+        return dataset
 
     def _add_dataset(self, dataset):
 

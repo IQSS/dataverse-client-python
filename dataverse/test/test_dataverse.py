@@ -100,19 +100,19 @@ class TestConnection(object):
             assert dataverse.alias == alias
             assert dataverse.title == 'Test Name'
         finally:
-            connection.delete_dataverse(alias)
+            connection.delete_dataverse(dataverse)
 
     def test_delete_dataverse(self):
         connection = Connection(TEST_HOST, TEST_TOKEN)
         alias = str(uuid.uuid1())   # must be unique
-        connection.create_dataverse(
+        dataverse = connection.create_dataverse(
             alias,
             'Test Name',
             'dataverse@example.com',
         )
 
-        connection.delete_dataverse(alias)
-        dataverse = connection.get_dataverse(alias, True)
+        connection.delete_dataverse(dataverse)
+        dataverse = connection.get_dataverse(alias)
 
         assert dataverse is None
 
@@ -123,7 +123,7 @@ class TestConnection(object):
 
         alias = str(uuid.uuid1())   # must be unique
 
-        connection.create_dataverse(
+        dataverse = connection.create_dataverse(
             alias,
             'Test Name',
             'dataverse@example.com',
@@ -132,30 +132,29 @@ class TestConnection(object):
         current_dataverses = connection.get_dataverses()
         try:
             assert len(current_dataverses) == len(original_dataverses) + 1
-            assert alias in [dataverse.alias for dataverse in current_dataverses]
+            assert alias in [dv.alias for dv in current_dataverses]
         finally:
-            connection.delete_dataverse(alias)
+            connection.delete_dataverse(dataverse)
 
         current_dataverses = connection.get_dataverses()
-        assert [dataverse.alias for dataverse in current_dataverses] == [dataverse.alias for dataverse in original_dataverses]
+        assert [dv.alias for dv in current_dataverses] == [dv.alias for dv in original_dataverses]
 
     def test_get_dataverse(self):
         connection = Connection(TEST_HOST, TEST_TOKEN)
         alias = str(uuid.uuid1())   # must be unique
         assert connection.get_dataverse(alias) is None
 
-        connection.create_dataverse(
+        dataverse = connection.create_dataverse(
             alias,
             'Test Name',
             'dataverse@example.com',
         )
 
-        dataverse = connection.get_dataverse(alias)
         try:
             assert dataverse is not None
             assert dataverse.alias == alias
         finally:
-            connection.delete_dataverse(alias)
+            connection.delete_dataverse(dataverse)
 
 
 class TestDataset(object):
@@ -213,7 +212,7 @@ class TestDatasetOperations(object):
     def teardown_class(cls):
 
         print 'Removing test Dataverse'
-        cls.connection.delete_dataverse(cls.alias)
+        cls.connection.delete_dataverse(cls.dataverse)
         dataverse = cls.connection.get_dataverse(cls.alias, True)
         assert dataverse is None
 
@@ -247,7 +246,7 @@ class TestDatasetOperations(object):
         self.dataverse.delete_dataset(retrieved_dataset)
 
     def test_add_files(self):
-        self.dataset.add_files(EXAMPLE_FILES)
+        self.dataset.upload_filepaths(EXAMPLE_FILES)
         actual_files = [f.name for f in self.dataset.get_files()]
 
         assert '__init__.py' in actual_files
@@ -266,26 +265,26 @@ class TestDatasetOperations(object):
         # not do anything with that xml yet. however, we do use get_entry
         # in other methods so this test case is probably covered
         assert self.dataset.get_entry()
-        
+
     def test_display_dataset_statement(self):
         # this just tests we can get an entry back, but does
         # not do anything with that xml yet. however, we do use get_statement
         # in other methods so this test case is probably covered
         assert self.dataset.get_statement()
-    
+
     def test_delete_a_file(self):
         self.dataset.upload_file('cat.jpg', b'Whatever a cat looks like goes here.')
-        
+
         # Add file and confirm
         files = self.dataset.get_files()
         assert len(files) == 1
         assert files[0].name == 'cat.jpg'
-        
+
         # Delete file and confirm
         self.dataset.delete_file(files[0])
         files = self.dataset.get_files()
         assert not files
-        
+
     def test_delete_a_dataset(self):
         xmlDataset = Dataset.from_xml_file(ATOM_DATASET)
         self.dataverse._add_dataset(xmlDataset)
@@ -305,7 +304,6 @@ class TestDatasetOperations(object):
         self.dataverse.delete_dataset(self.dataset)
         assert self.dataset.get_state(refresh=True) == 'DEACCESSIONED'
 
-    
+
 if __name__ == '__main__':
     pytest.main()
-
