@@ -1,60 +1,163 @@
-import unittest
+import pytest
+
+import uuid
+import httpretty
+
+from dataverse.connection import Connection
+from dataverse.dataset import Dataset
+from dataverse.settings import TEST_HOST, TEST_TOKEN
+from dataverse.test.config import PICS_OF_CATS_DATASET, ATOM_DATASET, EXAMPLE_FILES
+from dataverse import exceptions
+from dataverse import utils
 
 import logging
 logging.basicConfig(level=logging.ERROR)
 
-# local modules
-from dataverse.connection import Connection
-from dataverse.dataset import Dataset
-from dataverse.exceptions import DataverseError
-from dataverse.settings import TEST_HOST, TEST_TOKEN
-from dataverse.test.config import PICS_OF_CATS_DATASET, ATOM_DATASET
-from dataverse import utils
 
-
-class TestUtils(unittest.TestCase):
+class TestUtils(object):
 
     def test_get_element(self):
         with open(ATOM_DATASET) as f:
             entry = f.read()
+
         # One value
         title = utils.get_element(entry, 'title', 'dcterms').text
-        self.assertEqual(title, 'Roasting at Home')
+        assert title == 'Roasting at Home'
+
         # Two values
         creator = utils.get_element(entry, 'creator', 'dcterms').text
-        self.assertEqual(creator, 'Peets, John')
+        assert creator == 'Peets, John'
+
         # No values
         nonsense = utils.get_element(entry, 'nonsense', 'booga')
-        self.assertIsNone(nonsense)
+        assert nonsense is None
 
     def test_get_elements(self):
         with open(ATOM_DATASET) as f:
             entry = f.read()
+
         # One value
         titles = utils.get_elements(entry, 'title', 'dcterms')
-        self.assertEqual(len(titles), 1)
-        self.assertEqual(titles[0].text, 'Roasting at Home')
+        assert len(titles) == 1
+        assert titles[0].text == 'Roasting at Home'
+
         # Two values
         creators = utils.get_elements(entry, 'creator', 'dcterms')
-        self.assertEqual(len(creators), 2)
-        self.assertEqual(creators[0].text, 'Peets, John')
-        self.assertEqual(creators[1].text, 'Stumptown, Jane')
+        assert len(creators) == 2
+        assert creators[0].text == 'Peets, John'
+        assert creators[1].text == 'Stumptown, Jane'
+
         # No values
         nonsense = utils.get_elements(entry, 'nonsense', 'booga')
-        self.assertEqual(nonsense, [])
+        assert nonsense == []
 
     def test_format_term(self):
         # A term not in the replacement dict
         formatted_term = utils.format_term('title', namespace='dcterms')
-        self.assertEqual(formatted_term, '{http://purl.org/dc/terms/}title')
+        assert formatted_term == '{http://purl.org/dc/terms/}title'
 
     def test_format_term_replace(self):
         # A term in the replacement dict
         formatted_term = utils.format_term('id', namespace='dcterms')
-        self.assertEqual(formatted_term, '{http://purl.org/dc/terms/}identifier')
+        assert formatted_term == '{http://purl.org/dc/terms/}identifier'
 
 
-class TestDataset(unittest.TestCase):
+class TestConnection(object):
+
+    def test_connect(self):
+        connection = Connection(TEST_HOST, TEST_TOKEN)
+
+        assert connection.host == TEST_HOST
+        assert connection.token == TEST_TOKEN
+        assert connection._service_document
+
+    def test_connect_unauthorized(self):
+        with pytest.raises(exceptions.UnauthorizedError):
+            Connection(TEST_HOST, 'wrong-token')
+
+    @httpretty.activate
+    def test_connect_unknown_failure(self):
+        httpretty.register_uri(
+            httpretty.GET,
+            'https://{host}/dvn/api/data-deposit/v1.1/swordv2/service-document'.format(host=TEST_HOST),
+            status=400,
+        )
+
+        with pytest.raises(exceptions.ConnectionError):
+            Connection(TEST_HOST, TEST_TOKEN)
+
+    def test_create_dataverse(self):
+        connection = Connection(TEST_HOST, TEST_TOKEN)
+        alias = str(uuid.uuid1())   # must be unique
+        connection.create_dataverse(
+            alias,
+            'Test Name',
+            'dataverse@example.com',
+        )
+
+        dataverse = connection.get_dataverse(alias, True)
+        try:
+            assert dataverse.alias == alias
+            assert dataverse.title == 'Test Name'
+        finally:
+            connection.delete_dataverse(dataverse)
+
+    def test_delete_dataverse(self):
+        connection = Connection(TEST_HOST, TEST_TOKEN)
+        alias = str(uuid.uuid1())   # must be unique
+        dataverse = connection.create_dataverse(
+            alias,
+            'Test Name',
+            'dataverse@example.com',
+        )
+
+        connection.delete_dataverse(dataverse)
+        dataverse = connection.get_dataverse(alias)
+
+        assert dataverse is None
+
+    def test_get_dataverses(self):
+        connection = Connection(TEST_HOST, TEST_TOKEN)
+        original_dataverses = connection.get_dataverses()
+        assert isinstance(original_dataverses, list)
+
+        alias = str(uuid.uuid1())   # must be unique
+
+        dataverse = connection.create_dataverse(
+            alias,
+            'Test Name',
+            'dataverse@example.com',
+        )
+
+        current_dataverses = connection.get_dataverses()
+        try:
+            assert len(current_dataverses) == len(original_dataverses) + 1
+            assert alias in [dv.alias for dv in current_dataverses]
+        finally:
+            connection.delete_dataverse(dataverse)
+
+        current_dataverses = connection.get_dataverses()
+        assert [dv.alias for dv in current_dataverses] == [dv.alias for dv in original_dataverses]
+
+    def test_get_dataverse(self):
+        connection = Connection(TEST_HOST, TEST_TOKEN)
+        alias = str(uuid.uuid1())   # must be unique
+        assert connection.get_dataverse(alias) is None
+
+        dataverse = connection.create_dataverse(
+            alias,
+            'Test Name',
+            'dataverse@example.com',
+        )
+
+        try:
+            assert dataverse is not None
+            assert dataverse.alias == alias
+        finally:
+            connection.delete_dataverse(dataverse)
+
+
+class TestDataset(object):
 
     def test_init(self):
         dataset = Dataset(title='My Dataset', publisher='Mr. Pub Lisher')
@@ -68,9 +171,9 @@ class TestDataset(unittest.TestCase):
             namespace='dcterms',
             tag='publisher'
         ).text
-        self.assertEqual(title, 'My Dataset')
-        self.assertEqual(title, dataset.title)
-        self.assertEqual(publisher, 'Mr. Pub Lisher')
+        assert title == 'My Dataset'
+        assert title == dataset.title
+        assert publisher == 'Mr. Pub Lisher'
 
     def test_init_from_xml(self):
         dataset = Dataset.from_xml_file(ATOM_DATASET)
@@ -84,119 +187,123 @@ class TestDataset(unittest.TestCase):
             namespace='dcterms',
             tag='rights'
         ).text
-        self.assertEqual(title, 'Roasting at Home')
-        self.assertEqual(publisher, 'Creative Commons CC-BY 3.0 (unported) http://creativecommons.org/licenses/by/3.0/')
+        assert title == 'Roasting at Home'
+        assert publisher == 'Creative Commons CC-BY 3.0 (unported) http://creativecommons.org/licenses/by/3.0/'
 
 
-class TestDatasetOperations(unittest.TestCase):
+class TestDatasetOperations(object):
 
     @classmethod
-    def setUpClass(self):
-        print "Connecting to DVN."
-        self.dvc = Connection(TEST_HOST, TEST_TOKEN)
+    def setup_class(cls):
+        print 'Connecting to Dataverse host at {0}'.format(TEST_HOST)
+        cls.connection = Connection(TEST_HOST, TEST_TOKEN)
 
-        print "Getting Dataverse"
-        dataverses = self.dvc.get_dataverses()
-        if not dataverses:
-            raise DataverseError(
-                'You must have a Dataverse to run these tests.'
-            )
+        print 'Creating test Dataverse'
+        cls.alias = str(uuid.uuid1())
+        cls.connection.create_dataverse(
+            cls.alias,
+            'Test Dataverse',
+            'dataverse@example.com',
+        )
+        cls.dataverse = cls.connection.get_dataverse(cls.alias, True)
+        assert cls.dataverse
 
-        self.dv = dataverses[0]
+    @classmethod
+    def teardown_class(cls):
 
-        print "Removing any existing datasets."
-        datasets = self.dv.get_datasets()
-        for dataset in datasets:
-            if dataset.get_state() != 'DEACCESSIONED':
-                self.dv.delete_dataset(dataset)
-        print 'Dataverse emptied.'
+        print 'Removing test Dataverse'
+        cls.connection.delete_dataverse(cls.dataverse)
+        dataverse = cls.connection.get_dataverse(cls.alias, True)
+        assert dataverse is None
 
-    def setUp(self):
-        # runs before each test method
+    def setup_method(self, method):
 
         # create a dataset for each test
-        s = Dataset(**PICS_OF_CATS_DATASET)
-        self.dv.add_dataset(s)
-        doi = s.doi
-        self.s = self.dv.get_dataset_by_doi(doi)
-        self.assertEqual(doi, self.s.doi)
-        return
+        dataset = Dataset(**PICS_OF_CATS_DATASET)
+        self.dataverse._add_dataset(dataset)
+        self.dataset = self.dataverse.get_dataset_by_doi(dataset.doi)
 
-    def tearDown(self):
+    def teardown_method(self, method):
         try:
-            self.dv.delete_dataset(self.s)
+            self.dataverse.delete_dataset(self.dataset)
         finally:
             return
 
-    def test_create_dataset_from_xml(self):
+    def test_create_dataset(self):
+        title = str(uuid.uuid1())   # must be unique
+        self.dataverse.create_dataset(title, 'Descripty', 'foo@test.com')
+        dataset = self.dataverse.get_dataset_by_title(title)
+        try:
+            assert dataset.title == title
+        finally:
+            self.dataverse.delete_dataset(dataset)
+
+    def test_add_dataset_from_xml(self):
         new_dataset = Dataset.from_xml_file(ATOM_DATASET)
-        self.dv.add_dataset(new_dataset)
-        retrieved_dataset = self.dv.get_dataset_by_title("Roasting at Home")
-        self.assertTrue(retrieved_dataset)
-        self.dv.delete_dataset(retrieved_dataset)
+        self.dataverse._add_dataset(new_dataset)
+        retrieved_dataset = self.dataverse.get_dataset_by_title('Roasting at Home')
+        assert retrieved_dataset
+        self.dataverse.delete_dataset(retrieved_dataset)
 
     def test_add_files(self):
-        self.s.add_files(['test_dataverse.py', 'config.py'])
-        actual_files = [f.name for f in self.s.get_files()]
+        self.dataset.upload_filepaths(EXAMPLE_FILES)
+        actual_files = [f.name for f in self.dataset.get_files()]
 
-        self.assertIn('test_dataverse.py', actual_files)
-        self.assertIn('config.py', actual_files)
+        assert '__init__.py' in actual_files
+        assert 'config.py' in actual_files
 
     def test_upload_file(self):
-        self.s.upload_file('file.txt', 'This is a simple text file!')
-        self.s.upload_file('file2.txt', 'This is the second simple text file!')
-        actual_files = [f.name for f in self.s.get_files()]
+        self.dataset.upload_file('file.txt', 'This is a simple text file!')
+        self.dataset.upload_file('file2.txt', 'This is the second simple text file!')
+        actual_files = [f.name for f in self.dataset.get_files()]
 
-        self.assertIn('file.txt', actual_files)
-        self.assertIn('file2.txt', actual_files)
+        assert 'file.txt' in actual_files
+        assert 'file2.txt' in actual_files
 
     def test_display_atom_entry(self):
         # this just tests we can get an entry back, but does
         # not do anything with that xml yet. however, we do use get_entry
         # in other methods so this test case is probably covered
-        self.assertTrue(self.s.get_entry())
-        
+        assert self.dataset.get_entry()
+
     def test_display_dataset_statement(self):
         # this just tests we can get an entry back, but does
         # not do anything with that xml yet. however, we do use get_statement
         # in other methods so this test case is probably covered
-        self.assertTrue(self.s.get_statement())
-    
+        assert self.dataset.get_statement()
+
     def test_delete_a_file(self):
-        self.s.upload_file('cat.jpg', b'Whatever a cat looks like goes here.')
-        
-        #add file and confirm
-        files = self.s.get_files()
-        cat_file = [f for f in files if f.name == 'cat.jpg']
-        self.assertTrue(len(cat_file) == 1)
-        
-        #delete file and confirm
-        self.s.delete_file(cat_file[0])
-        files = self.s.get_files()
-        cat_file = [f for f in files if f.name == "cat.jpg"]
-        self.assertTrue(len(cat_file) == 0)
-        
+        self.dataset.upload_file('cat.jpg', b'Whatever a cat looks like goes here.')
+
+        # Add file and confirm
+        files = self.dataset.get_files()
+        assert len(files) == 1
+        assert files[0].name == 'cat.jpg'
+
+        # Delete file and confirm
+        self.dataset.delete_file(files[0])
+        files = self.dataset.get_files()
+        assert not files
+
     def test_delete_a_dataset(self):
         xmlDataset = Dataset.from_xml_file(ATOM_DATASET)
-        self.dv.add_dataset(xmlDataset)
-        atomDataset = self.dv.get_dataset_by_title("Roasting at Home")
-        self.assertTrue(atomDataset)
+        self.dataverse._add_dataset(xmlDataset)
+        atomDataset = self.dataverse.get_dataset_by_title('Roasting at Home')
+        num_datasets = len(self.dataverse.get_datasets())
 
-        num_datasets = len(self.dv.get_datasets())
-        self.assertTrue(num_datasets > 0)
-        self.dv.delete_dataset(atomDataset)
-        self.assertEqual(atomDataset.get_state(refresh=True), 'DEACCESSIONED')
-        self.assertEqual(len(self.dv.get_datasets()), num_datasets - 1)
+        assert num_datasets > 0
+        self.dataverse.delete_dataset(atomDataset)
+        assert atomDataset.get_state(refresh=True) == 'DEACCESSIONED'
+        assert len(self.dataverse.get_datasets()) == num_datasets - 1
 
-    @unittest.skip('Published datasets can no longer be deaccessioned via API')
+    @pytest.mark.skipif(True, reason='Published datasets can no longer be deaccessioned via API')
     def test_publish_dataset(self):
-        self.assertTrue(self.s.get_state() == "DRAFT")
-        self.s.publish()
-        self.assertTrue(self.s.get_state() == "PUBLISHED")
-        self.dv.delete_dataset(self.s)
-        self.assertTrue(self.s.get_state(refresh=True) == "DEACCESSIONED")
+        assert self.dataset.get_state() == 'DRAFT'
+        self.dataset.publish()
+        assert self.dataset.get_state() == 'PUBLISHED'
+        self.dataverse.delete_dataset(self.dataset)
+        assert self.dataset.get_state(refresh=True) == 'DEACCESSIONED'
 
-    
+
 if __name__ == '__main__':
-    unittest.main()
-
+    pytest.main()

@@ -33,22 +33,22 @@ files = dataset.get_files('latest')
 
 ### Configuration
 
-Create a file at `settings/local.py`. The file should contain the following
+Create a file at `dataverse/settings/local.py`. The file should contain the following
 information:
 
 ```python
-DEFAULT_HOST = "apitest.dataverse.org"
-DEFAULT_TOKEN = "" # Token can be generated at {host}/account/apitoken
+TEST_HOST = 'apitest.dataverse.org'  # or 'dataverse-demo.iq.harvard.edu'
+TEST_TOKEN = '' # Token can be generated at {host}/account/apitoken
 ```
 
 Do not commit this file.
 
 ### Running Tests
 
-In order to run any tests, you must first create a Dataverse on the
-host you wish to test. Do not run tests on the production server.
-
 To run tests:
 
-    $ cd dataverse/test
-    $ python -m unittest test_dataverse
+    $ py.test
+
+Or, to run a specific test:
+
+    $ py.test dataverse/test/test_dataverse.py::TestClassName::test_method_name

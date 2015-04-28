@@ -6,11 +6,12 @@ import unittest
 REQUIRES = [
     'bleach>=1.2.2',
     'requests>=2.2.1',
-    'lxml>=3.2.5'
+    'lxml>=3.2.5',
 ]
 
 TEST_REQUIRES = [
-
+    'httpretty>=0.8.8',
+    'pytest>=2.7.0',
 ]
 
 
