@@ -1,9 +1,9 @@
 from lxml import etree
 import requests
 
-from dataverse import Dataverse
-import exceptions
-from utils import get_elements
+from .dataverse import Dataverse
+from . import exceptions
+from .utils import get_elements
 
 
 class Connection(object):

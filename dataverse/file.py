@@ -1,4 +1,4 @@
-from utils import sanitize
+from .utils import sanitize
 
 
 class DataverseFile(object):

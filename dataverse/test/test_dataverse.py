@@ -1,14 +1,16 @@
+from __future__ import print_function
+
 import pytest
 
 import uuid
 import httpretty
 
-from dataverse.connection import Connection
-from dataverse.dataset import Dataset
-from dataverse.settings import TEST_HOST, TEST_TOKEN
-from dataverse.test.config import PICS_OF_CATS_DATASET, ATOM_DATASET, EXAMPLE_FILES
-from dataverse import exceptions
-from dataverse import utils
+from ..connection import Connection
+from ..dataset import Dataset
+from ..settings import TEST_HOST, TEST_TOKEN
+from ..test.config import PICS_OF_CATS_DATASET, ATOM_DATASET, EXAMPLE_FILES
+from .. import exceptions
+from .. import utils
 
 import logging
 logging.basicConfig(level=logging.ERROR)
@@ -195,10 +197,10 @@ class TestDatasetOperations(object):
 
     @classmethod
     def setup_class(cls):
-        print 'Connecting to Dataverse host at {0}'.format(TEST_HOST)
+        print('Connecting to Dataverse host at {0}'.format(TEST_HOST))
         cls.connection = Connection(TEST_HOST, TEST_TOKEN)
 
-        print 'Creating test Dataverse'
+        print('Creating test Dataverse')
         cls.alias = str(uuid.uuid1())
         cls.connection.create_dataverse(
             cls.alias,
@@ -211,7 +213,7 @@ class TestDatasetOperations(object):
     @classmethod
     def teardown_class(cls):
 
-        print 'Removing test Dataverse'
+        print('Removing test Dataverse')
         cls.connection.delete_dataverse(cls.dataverse)
         dataverse = cls.connection.get_dataverse(cls.alias, True)
         assert dataverse is None
