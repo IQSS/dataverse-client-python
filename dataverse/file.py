@@ -1,4 +1,6 @@
-from .utils import sanitize
+from __future__ import absolute_import
+
+from dataverse.utils import sanitize
 
 
 class DataverseFile(object):

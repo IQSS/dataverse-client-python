@@ -1,16 +1,16 @@
-from __future__ import print_function
+from __future__ import print_function, absolute_import
 
 import pytest
 
 import uuid
 import httpretty
 
-from ..connection import Connection
-from ..dataset import Dataset
-from ..settings import TEST_HOST, TEST_TOKEN
-from ..test.config import PICS_OF_CATS_DATASET, ATOM_DATASET, EXAMPLE_FILES
-from .. import exceptions
-from .. import utils
+from dataverse.connection import Connection
+from dataverse.dataset import Dataset
+from dataverse.settings import TEST_HOST, TEST_TOKEN
+from dataverse.test.config import PICS_OF_CATS_DATASET, ATOM_DATASET, EXAMPLE_FILES
+from dataverse import exceptions
+from dataverse import utils
 
 import logging
 logging.basicConfig(level=logging.ERROR)

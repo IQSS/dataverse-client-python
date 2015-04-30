@@ -1,10 +1,12 @@
+from __future__ import absolute_import
+
 import requests
 
-from .dataset import Dataset
-from .exceptions import (
+from dataverse.dataset import Dataset
+from dataverse.exceptions import (
     ConnectionError, MethodNotAllowedError, OperationFailedError,
 )
-from .utils import get_element, get_elements, sanitize
+from dataverse.utils import get_element, get_elements, sanitize
 
 
 class Dataverse(object):

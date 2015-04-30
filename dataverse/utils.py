@@ -1,9 +1,11 @@
+from __future__ import absolute_import
+
 import os
 
 from lxml import etree
 import bleach
 
-from .settings import SWORD_NAMESPACE, REPLACEMENT_DICT, UNIQUE_FIELDS
+from dataverse.settings import SWORD_NAMESPACE, REPLACEMENT_DICT, UNIQUE_FIELDS
 
 
 # factor out xpath operations so we don't have to look at its ugliness

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import os
 import json
 
@@ -15,9 +17,9 @@ from .exceptions import (
     NoContainerError, OperationFailedError, UnpublishedDataverseError,
     ConnectionError, MetadataNotFoundError, VersionJsonNotFoundError,
 )
-from .file import DataverseFile
-from .settings import SWORD_BOOTSTRAP
-from .utils import get_element, get_files_in_path, add_field
+from dataverse.file import DataverseFile
+from dataverse.settings import SWORD_BOOTSTRAP
+from dataverse.utils import get_element, get_files_in_path, add_field
 
 
 class Dataset(object):

@@ -1,6 +1,8 @@
-from .defaults import *
+from __future__ import absolute_import
+
+from dataverse.settings.defaults import *
 
 try:
-    from .local import *
+    from dataverse.settings.local import *
 except ImportError as error:
     pass
