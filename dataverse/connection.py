@@ -1,9 +1,11 @@
+from __future__ import absolute_import
+
 from lxml import etree
 import requests
 
-from dataverse import Dataverse
-import exceptions
-from utils import get_elements
+from dataverse.dataverse import Dataverse
+from dataverse import exceptions
+from dataverse.utils import get_elements
 
 
 class Connection(object):

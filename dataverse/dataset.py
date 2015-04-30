@@ -1,18 +1,25 @@
+from __future__ import absolute_import
+
 import os
 import json
-import StringIO
+
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import BytesIO as StringIO
+
 from zipfile import ZipFile
 
 from lxml import etree
 import requests
 
-from exceptions import (
+from .exceptions import (
     NoContainerError, OperationFailedError, UnpublishedDataverseError,
     ConnectionError, MetadataNotFoundError, VersionJsonNotFoundError,
 )
-from file import DataverseFile
-from settings import SWORD_BOOTSTRAP
-from utils import get_element, get_files_in_path, add_field
+from dataverse.file import DataverseFile
+from dataverse.settings import SWORD_BOOTSTRAP
+from dataverse.utils import get_element, get_files_in_path, add_field
 
 
 class Dataset(object):
@@ -35,7 +42,8 @@ class Dataset(object):
         self._id = None
 
         # Updates sword entry from keyword arguments
-        for key, value in kwargs.iteritems():
+        for key in kwargs:
+            value = kwargs[key]
             if isinstance(value, list):
                 for item in value:
                     add_field(self._entry, key, item, 'dcterms')
@@ -271,7 +279,7 @@ class Dataset(object):
             filepaths = get_files_in_path(filepaths[0])
 
         # Zip up files
-        s = StringIO.StringIO()
+        s = StringIO()
         zip_file = ZipFile(s, 'w')
         for filepath in filepaths:
             zip_file.write(filepath)
@@ -282,7 +290,7 @@ class Dataset(object):
 
     def upload_file(self, filename, content, zip_files=True):
         if zip_files:
-            s = StringIO.StringIO()
+            s = StringIO()
             zip_file = ZipFile(s, 'w')
             zip_file.writestr(filename, content)
             zip_file.close()

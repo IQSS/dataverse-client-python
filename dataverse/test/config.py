@@ -1,4 +1,7 @@
+from __future__ import absolute_import
+
 import os
+
 from dataverse.settings import BASE_PATH
 
 PICS_OF_CATS_DATASET = {

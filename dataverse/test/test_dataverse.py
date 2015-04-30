@@ -1,3 +1,5 @@
+from __future__ import print_function, absolute_import
+
 import pytest
 
 import uuid
@@ -195,10 +197,10 @@ class TestDatasetOperations(object):
 
     @classmethod
     def setup_class(cls):
-        print 'Connecting to Dataverse host at {0}'.format(TEST_HOST)
+        print('Connecting to Dataverse host at {0}'.format(TEST_HOST))
         cls.connection = Connection(TEST_HOST, TEST_TOKEN)
 
-        print 'Creating test Dataverse'
+        print('Creating test Dataverse')
         cls.alias = str(uuid.uuid1())
         cls.connection.create_dataverse(
             cls.alias,
@@ -211,7 +213,7 @@ class TestDatasetOperations(object):
     @classmethod
     def teardown_class(cls):
 
-        print 'Removing test Dataverse'
+        print('Removing test Dataverse')
         cls.connection.delete_dataverse(cls.dataverse)
         dataverse = cls.connection.get_dataverse(cls.alias, True)
         assert dataverse is None

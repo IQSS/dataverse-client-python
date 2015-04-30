@@ -1,9 +1,11 @@
+from __future__ import absolute_import
+
 import os
 
 from lxml import etree
 import bleach
 
-from settings import SWORD_NAMESPACE, REPLACEMENT_DICT, UNIQUE_FIELDS
+from dataverse.settings import SWORD_NAMESPACE, REPLACEMENT_DICT, UNIQUE_FIELDS
 
 
 # factor out xpath operations so we don't have to look at its ugliness
@@ -15,7 +17,7 @@ def get_element(root, tag='*', namespace=None, attribute=None, attribute_value=N
 def get_elements(root, tag='*', namespace=None, attribute=None, attribute_value=None):
 
     # If string, convert to etree element
-    if isinstance(root, str):
+    if isinstance(root, (str, bytes)):
         root = etree.XML(root)
 
     namespace = root.nsmap.get(namespace, namespace)
