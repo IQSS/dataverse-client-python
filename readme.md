@@ -38,7 +38,6 @@ information:
 
 ```python
 TEST_HOST = 'apitest.dataverse.org'  # or 'dataverse-demo.iq.harvard.edu'
-TEST_TOKEN = '' # Token can be generated at {host}/account/apitoken
 ```
 
 Do not commit this file.

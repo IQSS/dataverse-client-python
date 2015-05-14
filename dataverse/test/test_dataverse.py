@@ -4,16 +4,55 @@ import pytest
 
 import uuid
 import httpretty
+import requests
 
 from dataverse.connection import Connection
 from dataverse.dataset import Dataset
-from dataverse.settings import TEST_HOST, TEST_TOKEN
+from dataverse.settings import TEST_HOST
 from dataverse.test.config import PICS_OF_CATS_DATASET, ATOM_DATASET, EXAMPLE_FILES
 from dataverse import exceptions
 from dataverse import utils
 
 import logging
 logging.basicConfig(level=logging.ERROR)
+
+
+class DataverseServerTestBase(object):
+    """Create a temporary user on `TEST_SERVER` for testing purposes.
+
+    This attaches `username`, `password`, and `token` to the class.
+    """
+
+    @classmethod
+    def setup_class(cls):
+        """Create a temporary user"""
+        cls.username = str(uuid.uuid1())
+        cls.password = 'p4ssw0rd'
+        key = 'burrito'  # hardcoded on test servers
+        user_url = 'https://{0}/api/builtin-users?key={1}&password={2}'.format(
+            TEST_HOST, key, cls.password,
+        )
+        user_json = {
+            'email': '{0}@gmail.com'.format(cls.username),
+            'firstName': 'Namey',
+            'lastName': 'Namington',
+            'userName': cls.username,
+        }
+
+        resp = requests.post(user_url, json=user_json)
+        cls.token = resp.json()['data']['apiToken']
+
+    @classmethod
+    def teardown_class(cls):
+        """Delete the temporary user.
+
+        Note that this will fail if the user has any non-deleted content.
+        """
+        delete_url = 'https://{0}/api/admin/authenticatedUsers/{1}/'.format(
+            TEST_HOST, cls.username,
+        )
+        resp = requests.delete(delete_url)
+        assert resp.status_code == 200
 
 
 class TestUtils(object):
@@ -64,13 +103,13 @@ class TestUtils(object):
         assert formatted_term == '{http://purl.org/dc/terms/}identifier'
 
 
-class TestConnection(object):
+class TestConnection(DataverseServerTestBase):
 
     def test_connect(self):
-        connection = Connection(TEST_HOST, TEST_TOKEN)
+        connection = Connection(TEST_HOST, self.token)
 
         assert connection.host == TEST_HOST
-        assert connection.token == TEST_TOKEN
+        assert connection.token == self.token
         assert connection._service_document
 
     def test_connect_unauthorized(self):
@@ -86,10 +125,10 @@ class TestConnection(object):
         )
 
         with pytest.raises(exceptions.ConnectionError):
-            Connection(TEST_HOST, TEST_TOKEN)
+            Connection(TEST_HOST, self.token)
 
     def test_create_dataverse(self):
-        connection = Connection(TEST_HOST, TEST_TOKEN)
+        connection = Connection(TEST_HOST, self.token)
         alias = str(uuid.uuid1())   # must be unique
         connection.create_dataverse(
             alias,
@@ -105,7 +144,7 @@ class TestConnection(object):
             connection.delete_dataverse(dataverse)
 
     def test_delete_dataverse(self):
-        connection = Connection(TEST_HOST, TEST_TOKEN)
+        connection = Connection(TEST_HOST, self.token)
         alias = str(uuid.uuid1())   # must be unique
         dataverse = connection.create_dataverse(
             alias,
@@ -119,7 +158,7 @@ class TestConnection(object):
         assert dataverse is None
 
     def test_get_dataverses(self):
-        connection = Connection(TEST_HOST, TEST_TOKEN)
+        connection = Connection(TEST_HOST, self.token)
         original_dataverses = connection.get_dataverses()
         assert isinstance(original_dataverses, list)
 
@@ -142,7 +181,7 @@ class TestConnection(object):
         assert [dv.alias for dv in current_dataverses] == [dv.alias for dv in original_dataverses]
 
     def test_get_dataverse(self):
-        connection = Connection(TEST_HOST, TEST_TOKEN)
+        connection = Connection(TEST_HOST, self.token)
         alias = str(uuid.uuid1())   # must be unique
         assert connection.get_dataverse(alias) is None
 
@@ -193,12 +232,14 @@ class TestDataset(object):
         assert publisher == 'Creative Commons CC-BY 3.0 (unported) http://creativecommons.org/licenses/by/3.0/'
 
 
-class TestDatasetOperations(object):
+class TestDatasetOperations(DataverseServerTestBase):
 
     @classmethod
     def setup_class(cls):
+        super(TestDatasetOperations, cls).setup_class()
+
         print('Connecting to Dataverse host at {0}'.format(TEST_HOST))
-        cls.connection = Connection(TEST_HOST, TEST_TOKEN)
+        cls.connection = Connection(TEST_HOST, cls.token)
 
         print('Creating test Dataverse')
         cls.alias = str(uuid.uuid1())
@@ -212,6 +253,7 @@ class TestDatasetOperations(object):
 
     @classmethod
     def teardown_class(cls):
+        super(TestDatasetOperations, cls).setup_class()
 
         print('Removing test Dataverse')
         cls.connection.delete_dataverse(cls.dataverse)
