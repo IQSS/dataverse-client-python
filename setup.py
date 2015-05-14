@@ -12,6 +12,7 @@ REQUIRES = [
 TESTS_REQUIRE = [
     'httpretty>=0.8.8',
     'pytest>=2.7.0',
+    'flake8>=2.4.0',
 ]
 
 

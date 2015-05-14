@@ -51,3 +51,7 @@ To run tests:
 Or, to run a specific test:
 
     $ py.test dataverse/test/test_dataverse.py::TestClassName::test_method_name
+    
+To check for style:
+
+    $ flake8 .

@@ -51,8 +51,8 @@ class Dataverse(object):
         if not refresh and self._contents_json:
             return self._contents_json
 
-        content_uri = 'https://{0}/api/dataverses/{1}/contents'.format(
-            self.connection.host, self.alias
+        content_uri = '{0}/dataverses/{1}/contents'.format(
+            self.connection.native_base_url, self.alias
         )
         resp = requests.get(
             content_uri,
@@ -76,8 +76,8 @@ class Dataverse(object):
         return self._collection_info
 
     def publish(self):
-        edit_uri = 'https://{0}/dvn/api/data-deposit/v1.1/swordv2/edit/dataverse/{1}'.format(
-            self.connection.host, self.alias
+        edit_uri = '{0}/edit/dataverse/{1}'.format(
+            self.connection.sword_base_url, self.alias
         )
         resp = requests.post(
             edit_uri,

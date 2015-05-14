@@ -185,8 +185,8 @@ class Dataset(object):
         if not self.dataverse:
             raise NoContainerError('This dataset has not been added to a Dataverse.')
 
-        url = 'https://{0}/api/datasets/{1}/versions/:{2}'.format(
-            self.connection.host,
+        url = '{0}/datasets/{1}/versions/:{2}'.format(
+            self.connection.native_base_url,
             self.id,
             version,
         )
@@ -194,7 +194,9 @@ class Dataset(object):
         resp = requests.get(url, params={'key': self.connection.token})
 
         if resp.status_code == 404:
-            raise VersionJsonNotFoundError('JSON metadata could not be found for this version.')
+            raise VersionJsonNotFoundError(
+                'JSON metadata could not be found for this version.'
+            )
         elif resp.status_code != 200:
             raise ConnectionError('JSON metadata could not be retrieved.')
 
@@ -203,7 +205,11 @@ class Dataset(object):
 
         # Update corresponding version metadata if retrieving 'latest'
         if version == 'latest':
-            latest_version = 'latest-published' if metadata['versionState'] == 'RELEASED' else 'draft'
+            latest_version = (
+                'latest-published'
+                if metadata['versionState'] == 'RELEASED'
+                else 'draft'
+            )
             self._metadata[latest_version] = metadata
 
         return metadata
@@ -214,8 +220,8 @@ class Dataset(object):
 
         :param dict metadata: json retrieved from `get_version_metadata`
         """
-        url = 'https://{0}/api/datasets/{1}/versions/:draft'.format(
-            self.connection.host,
+        url = '{0}/datasets/{1}/versions/:draft'.format(
+            self.connection.native_base_url,
             self.id,
         )
         resp = requests.put(

@@ -7,4 +7,5 @@ python:
 install:
   - pip install -U .
 script:
+  - flake8 .
   - py.test

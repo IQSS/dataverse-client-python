@@ -120,7 +120,9 @@ class TestConnection(DataverseServerTestBase):
     def test_connect_unknown_failure(self):
         httpretty.register_uri(
             httpretty.GET,
-            'https://{host}/dvn/api/data-deposit/v1.1/swordv2/service-document'.format(host=TEST_HOST),
+            'https://{host}/dvn/api/data-deposit/v1.1/swordv2/service-document'.format(
+                host=TEST_HOST
+            ),
             status=400,
         )
 
@@ -229,7 +231,8 @@ class TestDataset(object):
             tag='rights'
         ).text
         assert title == 'Roasting at Home'
-        assert publisher == 'Creative Commons CC-BY 3.0 (unported) http://creativecommons.org/licenses/by/3.0/'
+        assert publisher == 'Creative Commons CC-BY 3.0 (unported) ' \
+                            'http://creativecommons.org/licenses/by/3.0/'
 
 
 class TestDatasetOperations(DataverseServerTestBase):
