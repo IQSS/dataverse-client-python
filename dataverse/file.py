@@ -9,11 +9,12 @@ class DataverseFile(object):
         self.name = sanitize(name)
         self.id = file_id
 
-        self.download_url = 'http://{0}/api/access/datafile/{1}'.format(
-            dataset.connection.host, self.id
+        self.download_url = '{0}/access/datafile/{1}'.format(
+            dataset.connection.native_base_url, self.id
         )
-        self.edit_media_uri = 'https://{0}/dvn/api/data-deposit/v1.1/swordv2/edit-media/file/{1}'.format(
-            dataset.connection.host, self.id
+        edit_media_base = '{0}/edit-media/file/{1}'
+        self.edit_media_uri = edit_media_base.format(
+            dataset.connection.sword_base_url, self.id
         )
 
     @classmethod

@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+
 class DataverseError(Exception):
     """Base exception class for Dataverse-related error."""
     pass

@@ -38,7 +38,6 @@ information:
 
 ```python
 TEST_HOST = 'apitest.dataverse.org'  # or 'dataverse-demo.iq.harvard.edu'
-TEST_TOKEN = '' # Token can be generated at {host}/account/apitoken
 ```
 
 Do not commit this file.
@@ -52,3 +51,7 @@ To run tests:
 Or, to run a specific test:
 
     $ py.test dataverse/test/test_dataverse.py::TestClassName::test_method_name
+    
+To check for style:
+
+    $ flake8 .

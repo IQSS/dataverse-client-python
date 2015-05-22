@@ -13,7 +13,11 @@ class Connection(object):
     def __init__(self, host, token):
         self.token = token
         self.host = host
-        self.sd_uri = 'https://{host}/dvn/api/data-deposit/v1.1/swordv2/service-document'.format(host=self.host)
+
+        self.base_url = 'https://{0}'.format(self.host)
+        self.native_base_url = '{0}/api/v1'.format(self.base_url)
+        self.sword_base_url = '{0}/dvn/api/data-deposit/v1.1/swordv2'.format(self.base_url)
+        self.sd_uri = '{0}/service-document'.format(self.sword_base_url)
         self._service_document = None
 
         self.get_service_document()
@@ -38,7 +42,7 @@ class Connection(object):
 
     def create_dataverse(self, alias, name, email, parent=':root'):
         resp = requests.post(
-            'https://{0}/api/dataverses/{1}'.format(self.host, parent),
+            '{0}/dataverses/{1}'.format(self.native_base_url, parent),
             json={
                 'alias': alias,
                 'name': name,
@@ -48,9 +52,13 @@ class Connection(object):
         )
 
         if resp.status_code == 404:
-            raise exceptions.DataverseNotFoundError('Dataverse {0} was not found.'.format(parent))
+            raise exceptions.DataverseNotFoundError(
+                'Dataverse {0} was not found.'.format(parent)
+            )
         elif resp.status_code != 201:
-            raise exceptions.OperationFailedError('{0} Dataverse could not be created.'.format(name))
+            raise exceptions.OperationFailedError(
+                '{0} Dataverse could not be created.'.format(name)
+            )
 
         self.get_service_document(refresh=True)
         return self.get_dataverse(alias)
@@ -58,16 +66,22 @@ class Connection(object):
     def delete_dataverse(self, dataverse):
 
         resp = requests.delete(
-            'https://{0}/api/dataverses/{1}'.format(self.host, dataverse.alias),
+            '{0}/dataverses/{1}'.format(self.native_base_url, dataverse.alias),
             params={'key': self.token},
         )
 
         if resp.status_code == 401:
-            raise exceptions.UnauthorizedError('Delete Dataverse unauthorized.')
+            raise exceptions.UnauthorizedError(
+                'Delete Dataverse {0} unauthorized.'.format(dataverse.alias)
+            )
         elif resp.status_code == 404:
-            raise exceptions.DataverseNotFoundError('Dataverse {0} was not found.'.format(dataverse.alias))
+            raise exceptions.DataverseNotFoundError(
+                'Dataverse {0} was not found.'.format(dataverse.alias)
+            )
         elif resp.status_code != 200:
-            raise exceptions.OperationFailedError('Dataverse {0} could not be deleted.'.format(dataverse.alias))
+            raise exceptions.OperationFailedError(
+                'Dataverse {0} could not be deleted.'.format(dataverse.alias)
+            )
 
         self.get_service_document(refresh=True)
 

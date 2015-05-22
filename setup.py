@@ -9,9 +9,10 @@ REQUIRES = [
     'lxml>=3.2.5',
 ]
 
-TEST_REQUIRES = [
+TESTS_REQUIRE = [
     'httpretty>=0.8.8',
     'pytest>=2.7.0',
+    'flake8>=2.4.0',
 ]
 
 
@@ -42,6 +43,6 @@ setup(
         'Natural Language :: English',
     ],
     test_suite='dataverse/test',
-    tests_require=TEST_REQUIRES,
+    tests_require=TESTS_REQUIRE,
     cmdclass={'test': unittest}
 )
