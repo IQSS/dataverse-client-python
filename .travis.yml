@@ -6,7 +6,7 @@ python:
   - 3.4
 install:
   - pip install -U .
-  - pip install httpretty pytest
+  - pip install httpretty pytest flake8
 script:
   - flake8 .
   - py.test
