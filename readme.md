@@ -5,10 +5,17 @@ APIs v4.0.  The intent is to publish the python client on https://pypi.python.or
 
 ## Installation
 
+You can install directly from the git repository using:
+
     $ pip install -e git+https://github.com/IQSS/dataverse-client-python.git#egg=dataverse
     
-Requires Python >= 2.6.
+Note that this requires Python >= 2.6. The dependencies for this package are:
 
+* [bleach](https://pypi.python.org/pypi/bleach) 1.2.2 or later
+* [requests](http://docs.python-requests.org/en/latest/) 2.2.1 or later
+* [lxml](http://lxml.de/) 3.2.5 or later
+
+When running the pip install command above, these dependencies will be automatically installed.
 
 ## Usage
 
