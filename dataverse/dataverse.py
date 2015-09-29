@@ -65,13 +65,14 @@ class Dataverse(object):
         self._contents_json = resp.json()['data']
         return self._contents_json
 
-    def get_collection_info(self, refresh=False):
+    def get_collection_info(self, refresh=False, timeout=None):
         if not refresh and self._collection_info:
             return self._collection_info
 
         self._collection_info = requests.get(
             self.collection.get('href'),
             auth=self.connection.auth,
+            timeout=timeout,
         ).content
         return self._collection_info
 
@@ -133,16 +134,16 @@ class Dataverse(object):
         dataset.is_deleted = True
         self.get_collection_info(refresh=True)
 
-    def get_datasets(self, refresh=False):
-        collection_info = self.get_collection_info(refresh)
+    def get_datasets(self, refresh=False, timeout=None):
+        collection_info = self.get_collection_info(refresh, timeout=timeout)
         entries = get_elements(collection_info, tag='entry')
         return [Dataset.from_dataverse(entry, self) for entry in entries]
 
-    def get_dataset_by_doi(self, doi, refresh=False):
-        return next((s for s in self.get_datasets(refresh) if s.doi == doi), None)
+    def get_dataset_by_doi(self, doi, refresh=False, timeout=None):
+        return next((s for s in self.get_datasets(refresh, timeout=timeout) if s.doi == doi), None)
 
-    def get_dataset_by_title(self, title, refresh=False):
-        return next((s for s in self.get_datasets(refresh) if s.title == title), None)
+    def get_dataset_by_title(self, title, refresh=False, timeout=None):
+        return next((s for s in self.get_datasets(refresh, timeout=timeout) if s.title == title), None)
 
-    def get_dataset_by_string_in_entry(self, string, refresh=False):
-        return next((s for s in self.get_datasets(refresh) if string in s.get_entry()), None)
+    def get_dataset_by_string_in_entry(self, string, refresh=False, timeout=None):
+        return next((s for s in self.get_datasets(refresh, timeout=timeout) if string in s.get_entry()), None)
