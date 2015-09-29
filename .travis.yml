@@ -13,12 +13,12 @@ cache:
     - $HOME/wheelhouse
 
 env:
-  - WHEELHOUSE=$HOME/wheelhouse
+  - WHEELHOUSE=$HOME/wheelhouse/`python --version`
 
 install:
-  - pip wheel --find-links=$HOME/wheelhouse --wheel-dir=$HOME/wheelhouse . httpretty pytest flake8
-  - pip install --find-links=$HOME/wheelhouse --no-index . httpretty pytest flake8
+  - pip wheel --find-links=$HOME/wheelhouse --wheel-dir=$HOME/wheelhouse . httpretty pytest flake8 ordereddict
+  - pip install --find-links=$HOME/wheelhouse --no-index . httpretty pytest flake8 ordereddict
 
 script:
   - flake8 .
-  - py.test
+  - py.test -v
