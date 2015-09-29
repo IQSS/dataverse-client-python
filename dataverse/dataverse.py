@@ -140,10 +140,19 @@ class Dataverse(object):
         return [Dataset.from_dataverse(entry, self) for entry in entries]
 
     def get_dataset_by_doi(self, doi, refresh=False, timeout=None):
-        return next((s for s in self.get_datasets(refresh, timeout=timeout) if s.doi == doi), None)
+        return next(
+            (s for s in self.get_datasets(refresh, timeout=timeout) if s.doi == doi),
+            None
+        )
 
     def get_dataset_by_title(self, title, refresh=False, timeout=None):
-        return next((s for s in self.get_datasets(refresh, timeout=timeout) if s.title == title), None)
+        return next(
+            (s for s in self.get_datasets(refresh, timeout=timeout) if s.title == title),
+            None
+        )
 
     def get_dataset_by_string_in_entry(self, string, refresh=False, timeout=None):
-        return next((s for s in self.get_datasets(refresh, timeout=timeout) if string in s.get_entry()), None)
+        return next(
+            (s for s in self.get_datasets(refresh, timeout=timeout) if string in s.get_entry()),
+            None
+        )
