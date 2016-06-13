@@ -6,7 +6,7 @@ APIs v4.0.  The intent is to publish the python client on https://pypi.python.or
 ## Installation
 
     $ pip install -e git+https://github.com/IQSS/dataverse-client-python.git#egg=dataverse
-    
+
 Requires Python >= 2.6.
 
 
@@ -20,6 +20,8 @@ host = 'apitest.dataverse.org'                  # All clients >4.0 are supported
 token = '4d0634d3-74d5-4770-8088-1971847ac75e'  # Generated at /account/apitoken
 
 connection = Connection(host, token)
+# For non-https connections (e.g. local dev environment), try:
+#   connection = Connection(host, token, use_https=False)
 ```
 
 Dataverse Objects can be retrieved from their respective containers
@@ -51,7 +53,7 @@ To run tests:
 Or, to run a specific test:
 
     $ py.test dataverse/test/test_dataverse.py::TestClassName::test_method_name
-    
+
 To check for style:
 
     $ flake8 .

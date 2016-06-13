@@ -10,11 +10,15 @@ from dataverse.utils import get_elements
 
 class Connection(object):
 
-    def __init__(self, host, token):
+    def __init__(self, host, token, use_https=True):
         self.token = token
         self.host = host
 
-        self.base_url = 'https://{0}'.format(self.host)
+        if use_https:
+            url_scheme = 'https://'
+        else:
+            url_scheme = 'http://'
+        self.base_url = '{0}{1}'.format(url_scheme, self.host)
         self.native_base_url = '{0}/api/v1'.format(self.base_url)
         self.sword_base_url = '{0}/dvn/api/data-deposit/v1.1/swordv2'.format(self.base_url)
         self.sd_uri = '{0}/service-document'.format(self.sword_base_url)

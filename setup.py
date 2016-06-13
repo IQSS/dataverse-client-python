@@ -23,7 +23,7 @@ def read(fname):
 
 setup(
     name='dataverse',
-    version='0.1.1',
+    version='0.1.2',
     description='Python client for Dataverse version 3.X',
     long_description=read("readme.md"),
     author='Dataverse',
