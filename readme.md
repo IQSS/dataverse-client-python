@@ -16,7 +16,7 @@ To use the python client, you will need a dataverse account and an API token.
 ```python
 from dataverse import Connection
 
-host = 'apitest.dataverse.org'                  # All clients >4.0 are supported
+host = 'demo.dataverse.org'                  # All clients >4.0 are supported
 token = '4d0634d3-74d5-4770-8088-1971847ac75e'  # Generated at /account/apitoken
 
 connection = Connection(host, token)
@@ -39,7 +39,7 @@ Create a file at `dataverse/settings/local.py`. The file should contain the foll
 information:
 
 ```python
-TEST_HOST = 'apitest.dataverse.org'  # or 'dataverse-demo.iq.harvard.edu'
+TEST_HOST = 'demo.dataverse.org'
 ```
 
 Do not commit this file.
