@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 import os
 
-TEST_HOST = 'apitest.dataverse.org'
+TEST_HOST = 'demo.dataverse.org'
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BASE_PATH = os.path.abspath(os.path.join(HERE, os.pardir))
