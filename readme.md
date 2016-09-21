@@ -1,3 +1,13 @@
+## insecure SSL added
+This fork adds an parameter verify to Connection
+
+cnt = Connection(host,key,use_https=True,verify=False)
+
+which disables checking of certificates by using https.
+
+----
+
+
 ## Dataverse API Client
 
 This is a library for writing Python applications that make use of Dataverse
