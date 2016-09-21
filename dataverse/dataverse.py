@@ -23,7 +23,7 @@ class Dataverse(object):
         # Always check latest version
         collection_info = requests.get(
             self.collection.get('href'),
-            auth=self.connection.auth,
+            auth=self.connection.auth,verify=self.connection.verify
         ).content
 
         status_tag = get_element(
@@ -56,7 +56,7 @@ class Dataverse(object):
         )
         resp = requests.get(
             content_uri,
-            params={'key': self.connection.token}
+            params={'key': self.connection.token},verify=self.connection.verify
         )
 
         if resp.status_code != 200:
@@ -69,10 +69,11 @@ class Dataverse(object):
         if not refresh and self._collection_info:
             return self._collection_info
 
+        #print(self.collection.get('href'))
         self._collection_info = requests.get(
             self.collection.get('href'),
             auth=self.connection.auth,
-            timeout=timeout,
+            timeout=timeout,verify=self.connection.verify
         ).content
         return self._collection_info
 
@@ -83,7 +84,7 @@ class Dataverse(object):
         resp = requests.post(
             edit_uri,
             headers={'In-Progress': 'false'},
-            auth=self.connection.auth,
+            auth=self.connection.auth,verify=self.connection.verify
         )
 
         if resp.status_code != 200:
@@ -106,7 +107,7 @@ class Dataverse(object):
             self.collection.get('href'),
             data=dataset.get_entry(),
             headers={'Content-type': 'application/atom+xml'},
-            auth=self.connection.auth,
+            auth=self.connection.auth,verify=self.connection.verify
         )
 
         if resp.status_code != 201:
@@ -122,7 +123,7 @@ class Dataverse(object):
 
         resp = requests.delete(
             dataset.edit_uri,
-            auth=self.connection.auth,
+            auth=self.connection.auth,verify=self.connection.verify
         )
         if resp.status_code == 405:
             raise MethodNotAllowedError(

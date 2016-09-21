@@ -10,10 +10,10 @@ from dataverse.utils import get_elements
 
 class Connection(object):
 
-    def __init__(self, host, token, use_https=True):
+    def __init__(self, host, token, use_https=True,verify=True):
         self.token = token
         self.host = host
-
+        self.verify =verify
         if use_https:
             url_scheme = 'https://'
         else:
@@ -34,7 +34,7 @@ class Connection(object):
         if not refresh and self._service_document is not None:
             return self._service_document
 
-        resp = requests.get(self.sd_uri, auth=self.auth)
+        resp = requests.get(self.sd_uri, auth=self.auth, verify=self.verify)
 
         if resp.status_code == 403:
             raise exceptions.UnauthorizedError('The credentials provided are invalid.')
