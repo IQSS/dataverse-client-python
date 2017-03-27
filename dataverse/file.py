@@ -19,6 +19,6 @@ class DataverseFile(object):
 
     @classmethod
     def from_json(cls, dataset, json):
-        name = json['datafile']['name']
-        file_id = json['datafile']['id']
+        name = json['dataFile']['filename']
+        file_id = json['dataFile']['id']
         return cls(dataset, name, file_id)
