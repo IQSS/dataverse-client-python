@@ -23,9 +23,14 @@ class Connection(object):
         self.sword_base_url = '{0}/dvn/api/data-deposit/v1.1/swordv2'.format(self.base_url)
         self.sd_uri = '{0}/service-document'.format(self.sword_base_url)
         self._service_document = None
-
-        self.get_service_document()
-
+        self.fileAccess_base_url = '{0}/api/access/datafile'.format(self.base_url)
+        
+        try:
+            self.get_service_document()
+            self.authorized=True
+        except exceptions.UnauthorizedError:
+            self.authorized=False
+        
     @property
     def auth(self):
         return self.token, None
