@@ -1,5 +1,7 @@
 ## Dataverse API Client
 
+**PLEASE NOTE: This library is maintained by the Dataverse community, not IQSS.**
+
 This is a library for writing Python applications that make use of Dataverse
 APIs v4.0.  The intent is to publish the python client on https://pypi.python.org.
 
