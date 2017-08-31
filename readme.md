@@ -1,3 +1,13 @@
+## insecure SSL added
+This fork adds an parameter verify to Connection
+
+cnt = Connection(host,key,use_https=True,verify=False)
+
+which disables checking of certificates by using https.
+
+----
+
+
 ## Dataverse API Client
 
 **PLEASE NOTE: This library is maintained by the Dataverse community, not IQSS.**

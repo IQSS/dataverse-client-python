@@ -125,7 +125,7 @@ class Dataset(object):
         if not refresh and self._entry is not None:
             return etree.tostring(self._entry)
 
-        resp = requests.get(self.edit_uri, auth=self.connection.auth)
+        resp = requests.get(self.edit_uri, auth=self.connection.auth,verify=self.connection.verify)
 
         if resp.status_code != 200:
             raise ConnectionError('Atom entry could not be retrieved.')
@@ -159,7 +159,7 @@ class Dataset(object):
                 )
             self.statement_uri = link.get('href')
 
-        resp = requests.get(self.statement_uri, auth=self.connection.auth)
+        resp = requests.get(self.statement_uri, auth=self.connection.auth, verify=self.connection.verify)
 
         if resp.status_code != 200:
             raise ConnectionError('Statement could not be retrieved.')
@@ -191,7 +191,7 @@ class Dataset(object):
             version,
         )
 
-        resp = requests.get(url, params={'key': self.connection.token})
+        resp = requests.get(url, params={'key': self.connection.token},verify=self.connection.verify)
 
         if resp.status_code == 404:
             raise VersionJsonNotFoundError(
@@ -251,7 +251,7 @@ class Dataset(object):
         resp = requests.post(
             self.edit_uri,
             headers={'In-Progress': 'false', 'Content-Length': 0},
-            auth=self.connection.auth,
+            auth=self.connection.auth,verify=self.connection.verify
         )
 
         if resp.status_code != 200:
@@ -314,7 +314,7 @@ class Dataset(object):
             self.edit_media_uri,
             data=content,
             headers=headers,
-            auth=self.connection.auth,
+            auth=self.connection.auth,verify=self.connection.verify
         )
 
         self.get_metadata(refresh=True)
@@ -323,7 +323,7 @@ class Dataset(object):
     def delete_file(self, dataverse_file):
         resp = requests.delete(
             dataverse_file.edit_media_uri,
-            auth=self.connection.auth,
+            auth=self.connection.auth,verify=self.connection.verify
         )
 
         if resp.status_code != 204:

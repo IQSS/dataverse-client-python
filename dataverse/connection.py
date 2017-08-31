@@ -10,10 +10,10 @@ from dataverse.utils import get_elements
 
 class Connection(object):
 
-    def __init__(self, host, token, use_https=True):
+    def __init__(self, host, token, use_https=True,verify=True):
         self.token = token
         self.host = host
-
+        self.verify =verify
         if use_https:
             url_scheme = 'https://'
         else:
@@ -23,9 +23,14 @@ class Connection(object):
         self.sword_base_url = '{0}/dvn/api/data-deposit/v1.1/swordv2'.format(self.base_url)
         self.sd_uri = '{0}/service-document'.format(self.sword_base_url)
         self._service_document = None
-
-        self.get_service_document()
-
+        self.fileAccess_base_url = '{0}/api/access/datafile'.format(self.base_url)
+        
+        try:
+            self.get_service_document()
+            self.authorized=True
+        except exceptions.UnauthorizedError:
+            self.authorized=False
+        
     @property
     def auth(self):
         return self.token, None
@@ -34,7 +39,7 @@ class Connection(object):
         if not refresh and self._service_document is not None:
             return self._service_document
 
-        resp = requests.get(self.sd_uri, auth=self.auth)
+        resp = requests.get(self.sd_uri, auth=self.auth, verify=self.verify)
 
         if resp.status_code == 403:
             raise exceptions.UnauthorizedError('The credentials provided are invalid.')
