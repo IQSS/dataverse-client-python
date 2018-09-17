@@ -250,7 +250,7 @@ class Dataset(object):
 
         resp = requests.post(
             self.edit_uri,
-            headers={'In-Progress': 'false', 'Content-Length': 0},
+            headers={'In-Progress': 'false', 'Content-Length': '0'},
             auth=self.connection.auth,
         )
 
