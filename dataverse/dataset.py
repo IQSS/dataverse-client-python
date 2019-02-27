@@ -98,14 +98,15 @@ class Dataset(object):
             raise NoContainerError('This dataset has not been added to a Dataverse.')
 
         for dataset in self.dataverse.get_contents(refresh=True):
-            doi = '{0}:{1}/{2}'.format(
-                dataset['protocol'],
-                dataset['authority'],
-                dataset['identifier'],
-            )
-            if doi == self.doi:
-                self._id = dataset['id']
-                return self._id
+            if dataset['type'] == 'dataset':
+                doi = '{0}:{1}/{2}'.format(
+                    dataset['protocol'],
+                    dataset['authority'],
+                    dataset['identifier'],
+                )
+                if doi == self.doi:
+                    self._id = dataset['id']
+                    return self._id
 
         raise MetadataNotFoundError('The dataset ID could not be found.')
 
