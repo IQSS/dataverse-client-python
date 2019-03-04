@@ -292,6 +292,19 @@ class TestDatasetOperations(DataverseServerTestBase):
         assert retrieved_dataset
         self.dataverse.delete_dataset(retrieved_dataset)
 
+    def test_id_property(self):
+        alias = str(uuid.uuid1())
+        # Creating a dataverse within a dataverse
+        self.connection.create_dataverse(
+            alias,
+            'Sub Dataverse',
+            'dataverse@example.com',
+            self.alias,
+        )
+        sub_dataverse = self.connection.get_dataverse(alias, True)
+        assert self.dataset.id == self.dataset._id
+        self.connection.delete_dataverse(sub_dataverse)
+
     def test_add_files(self):
         self.dataset.upload_filepaths(EXAMPLE_FILES)
         actual_files = [f.name for f in self.dataset.get_files()]
