@@ -1,0 +1,23 @@
+language: python
+
+python:
+  - 2.7
+  - 3.3
+  #- 3.4 # "No output has been received in the last 10 minutes, this potentially indicates a stalled build or something wrong with the build itself."
+
+sudo: false
+
+cache:
+  directories:
+    - $HOME/wheelhouse
+
+env:
+  - WHEELHOUSE=$HOME/wheelhouse/`python --version`
+
+install:
+  - pip wheel --find-links=$HOME/wheelhouse --wheel-dir=$HOME/wheelhouse . httpretty pytest flake8 ordereddict
+  - pip install --find-links=$HOME/wheelhouse --no-index . httpretty pytest flake8 ordereddict
+
+script:
+  - flake8 .
+  - py.test -v
