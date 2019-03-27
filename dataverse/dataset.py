@@ -185,6 +185,7 @@ class Dataset(object):
         if not self.dataverse:
             raise NoContainerError('This dataset has not been added to a Dataverse.')
 
+
         try:
             version = str(int(version)) #test if string
         except:
@@ -192,6 +193,7 @@ class Dataset(object):
                 version=":"+version
                 
         url = '{0}/datasets/{1}/versions/{2}'.format(
+
             self.connection.native_base_url,
             self.id,
             version,
@@ -322,7 +324,7 @@ class Dataset(object):
             headers=headers,
             auth=self.connection.auth,verify=self.connection.verify
         )
-
+    
         self.get_metadata(refresh=True)
         # Note: We can't determine which file was uploaded. Returns None
 
