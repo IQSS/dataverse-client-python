@@ -71,7 +71,11 @@ class Dataverse(object):
 
         #print(self.collection.get('href'))
         self._collection_info = requests.get(
+<<<<<<< HEAD
             self.collection.get('href'),
+=======
+            self.collection.get('href').replace("https","http"),
+>>>>>>> few fixes
             auth=self.connection.auth,
             timeout=timeout,verify=self.connection.verify
         ).content

@@ -185,7 +185,17 @@ class Dataset(object):
         if not self.dataverse:
             raise NoContainerError('This dataset has not been added to a Dataverse.')
 
+<<<<<<< HEAD
         url = '{0}/datasets/{1}/versions/:{2}'.format(
+=======
+        try:
+            version = str(int(version)) #test if string
+        except:
+            if not version.startswith(":"):
+                version=":"+version
+                
+        url = '{0}/datasets/{1}/versions/{2}'.format(
+>>>>>>> few fixes
             self.connection.native_base_url,
             self.id,
             version,
@@ -311,7 +321,11 @@ class Dataset(object):
         }
 
         requests.post(
+<<<<<<< HEAD
             self.edit_media_uri,
+=======
+            self.edit_media_uri.replace("https","http"),
+>>>>>>> few fixes
             data=content,
             headers=headers,
             auth=self.connection.auth,verify=self.connection.verify

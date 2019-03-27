@@ -45,7 +45,11 @@ class Connection(object):
             raise exceptions.UnauthorizedError('The credentials provided are invalid.')
         elif resp.status_code != 200:
             raise exceptions.ConnectionError('Could not connect to the Dataverse')
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> few fixes
         self._service_document = etree.XML(resp.content)
         return self._service_document
 
