@@ -5,6 +5,8 @@
 This is a library for writing Python applications that make use of Dataverse
 APIs v4.0.  The intent is to publish the python client on https://pypi.python.org.
 
+There is also another Python module for Dataverse, called [pyDataverse](https://github.com/AUSSDA/pyDataverse), which is actively developed and maintained by AUSSDA - The Austrian Social Science Data Archive.
+
 ## Installation
 
     $ pip install -e git+https://github.com/IQSS/dataverse-client-python.git#egg=dataverse
