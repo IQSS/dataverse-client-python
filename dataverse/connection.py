@@ -59,7 +59,7 @@ class Connection(object):
             raise exceptions.DataverseNotFoundError(
                 'Dataverse {0} was not found.'.format(parent)
             )
-        elif resp.status_code != 201:
+        elif not (resp.status_code == 201 or resp.status_code == 200):
             raise exceptions.OperationFailedError(
                 '{0} Dataverse could not be created.'.format(name)
             )
