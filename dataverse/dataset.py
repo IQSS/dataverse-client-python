@@ -97,12 +97,17 @@ class Dataset(object):
         if not self.dataverse:
             raise NoContainerError('This dataset has not been added to a Dataverse.')
 
+    
         for dataset in self.dataverse.get_contents(refresh=True):
-            doi = '{0}:{1}/{2}'.format(
-                dataset['protocol'],
-                dataset['authority'],
-                dataset['identifier'],
-            )
+            print(dataset)
+            try:
+                doi = '{0}:{1}/{2}'.format(
+                    dataset['protocol'],
+                    dataset['authority'],
+                    dataset['identifier'],
+                )
+            except:
+                continue
             if doi == self.doi:
                 self._id = dataset['id']
                 return self._id
@@ -185,7 +190,6 @@ class Dataset(object):
         if not self.dataverse:
             raise NoContainerError('This dataset has not been added to a Dataverse.')
 
-
         try:
             version = str(int(version)) #test if string
         except:
@@ -193,7 +197,6 @@ class Dataset(object):
                 version=":"+version
                 
         url = '{0}/datasets/{1}/versions/{2}'.format(
-
             self.connection.native_base_url,
             self.id,
             version,
@@ -324,7 +327,7 @@ class Dataset(object):
             headers=headers,
             auth=self.connection.auth,verify=self.connection.verify
         )
-    
+
         self.get_metadata(refresh=True)
         # Note: We can't determine which file was uploaded. Returns None
 
